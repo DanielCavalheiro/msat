@@ -1,0 +1,27 @@
+# Input functions where tainted data can come from
+input: [ "$_SERVER", "$_GET", "$_POST", "$_COOKIE", "$_REQUEST", "$_FILES", "$_ENV", "$_SESSION", "$_php_errormsg", ]
+
+# Vulnerability supported
+vulnerabilities:
+
+  - { name: "XSS", sensitive_sinks: [ "echo" ],
+      sanitization_functions: [ "encodeForHTML", "htmlentities", "htmlspecialchars", "strip_tags", "urlencode" ]
+  }
+
+  - { name: "SQLi", sensitive_sinks: [ "mysql_query", "mysql_unbuffered_query", "mysql_db_query", "mysqli_query",
+                                       "mysqli_real_query", "mysqli_master_query", "mysqli_multi_query",
+                                       "mysqli_stmt_execute", "mysqli_execute" ],
+      sanitization_functions: [ "mysql_escape_string", "mysql_real_escape_string", "mysqli_escape_string",
+                                "mysqli_real_escape_string", "mysqli_stmt_bind_param" ]
+  }
+
+  #- { name: "Command Injection", sensitive_sinks: [ "exec", "passthru", "proc_open", "shell_exec", "system" ],
+  #      sanitization_functions: [ "escapeshellarg", "escapeshellcmd" ]
+  #}
+
+  #- { name: "LDAP Injection", sensitive_sinks: [ "ldap_search", "ldap_list", "ldap_read", "ldap_compare",
+  #                                                  "ldap_rename", "ldap_delete", "ldap_add", "ldap_modify",
+  #                                                 "ldap_mod_add", "ldap_mod_del", "ldap_mod_replace" ],
+  #   sanitization_functions: [ "ldap_escape" ]
+  #}
+

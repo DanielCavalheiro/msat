@@ -1,9 +1,8 @@
-# ----------------------------------------------------------------------
-# A lexer for PHP. Adapted from viraptor/phply
-# ----------------------------------------------------------------------
+# module: lexer.py
+# This module just contains the lexing rules. Adapted from viraptor/phply
 
-import ply.lex as lex
 import re
+import yaml
 
 states = (
     ('php', 'exclusive'),
@@ -20,20 +19,20 @@ states = (
 )
 
 # Reserved words
-reserved = (
+reserved = (  # ECHO was removed from this list
     'ARRAY', 'AS', 'BREAK', 'CASE', 'CLASS', 'CONST', 'CONTINUE', 'DECLARE',
-    'DEFAULT', 'DIE', 'DO', 'ECHO', 'ELSE', 'ELSEIF', 'EMPTY', 'ENDDECLARE',
+    'DEFAULT', 'DIE', 'DO', 'ELSE', 'ELSEIF', 'EMPTY', 'ENDDECLARE',
     'ENDFOR', 'ENDFOREACH', 'ENDIF', 'ENDSWITCH', 'ENDWHILE', 'EVAL', 'EXIT',
     'EXTENDS', 'FOR', 'FOREACH', 'FUNCTION', 'GLOBAL', 'IF', 'INCLUDE',
     'INCLUDE_ONCE', 'INSTANCEOF', 'ISSET', 'LIST', 'NEW', 'PRINT', 'REQUIRE',
     'REQUIRE_ONCE', 'RETURN', 'STATIC', 'SWITCH', 'UNSET', 'USE', 'VAR',
     'WHILE', 'FINAL', 'INTERFACE', 'IMPLEMENTS', 'PUBLIC', 'PRIVATE',
     'PROTECTED', 'ABSTRACT', 'CLONE', 'TRY', 'CATCH', 'THROW', 'NAMESPACE',
-    'FINALLY', 'TRAIT', 'YIELD',
+    'FINALLY', 'TRAIT', 'YIELD'
 )
 
-# Not used by parser
-unparsed = (
+# Not used for analysis purposes
+filtered = (
     # Invisible characters
     'WHITESPACE',
 
@@ -44,7 +43,7 @@ unparsed = (
     'COMMENT', 'DOC_COMMENT',
 )
 
-tokens = reserved + unparsed + (
+tokens = reserved + filtered + (
     # Operators
     'PLUS', 'MINUS', 'MUL', 'DIV', 'MOD', 'AND', 'OR', 'NOT', 'XOR', 'SL',
     'SR', 'BOOLEAN_AND', 'BOOLEAN_OR', 'BOOLEAN_NOT', 'IS_SMALLER',
@@ -90,6 +89,9 @@ tokens = reserved + unparsed + (
 
     # Backtick
     'BACKTICK',
+
+    # Usefull for analysis
+    'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF'
 )
 
 
@@ -220,7 +222,7 @@ def t_php_COMMENT(t):
 
 def t_OPEN_TAG(t):
     r'<[?%](([Pp][Hh][Pp][ \t\r\n]?)|=)?'
-    if '=' in t.value: t.type = 'OPEN_TAG_WITH_ECHO'
+    if '=' in t.value: t.type = 'XSS_SENS'  # This is the same as echo statement, so it's a xss sensitive sink
     t.lexer.lineno += t.value.count("\n")
     t.lexer.begin('php')
     return t
@@ -257,6 +259,26 @@ reserved_map = {
     '__HALT_COMPILER': 'HALT_COMPILER',
 }
 
+tainted_variables = []
+with open('components/knowledge_source.yaml') as file:
+    try:
+        knowledge = yaml.safe_load(file)
+
+        tainted_variables = knowledge['input']
+
+        vulnerabilities = knowledge['vulnerabilities']
+        for vulnerability in vulnerabilities:
+            name = vulnerability['name']
+
+            for sink in vulnerability['sensitive_sinks']:
+                reserved_map[str(sink).upper()] = (name + '_SENS').upper()
+
+            for sanitizer in vulnerability['sanitization_functions']:
+                reserved_map[sanitizer.upper()] = (name + '_SANF').upper()
+
+    except yaml.YAMLError as exc:
+        print(exc)
+
 for r in reserved:
     reserved_map[r] = r
 
@@ -271,6 +293,8 @@ def t_php_STRING(t):
 # Variable
 def t_php_VARIABLE(t):
     r'\$[A-Za-z_][\w_]*'
+    if t.value in tainted_variables:
+        t.type = 'INPUT'
     return t
 
 
@@ -538,95 +562,3 @@ def peek(lexer):
         return lexer.lexdata[lexer.lexpos]
     except IndexError:
         return ''
-
-
-class FilteredLexer(object):
-    def __init__(self, lexer):
-        self.lexer = lexer
-        self.last_token = None
-
-    @property
-    def lineno(self):
-        return self.lexer.lineno
-
-    @lineno.setter
-    def lineno(self, value):
-        self.lexer.lineno = value
-
-    @property
-    def lexpos(self):
-        return self.lexer.lexpos
-
-    @lexpos.setter
-    def lexpos(self, value):
-        self.lexer.lexpos = value
-
-    def clone(self):
-        return FilteredLexer(self.lexer.clone())
-
-    def current_state(self):
-        return self.lexer.current_state()
-
-    def input(self, input):
-        self.lexer.input(input)
-
-    def next_lexer_token(self):
-        """Return next lexer token.
-
-        Can be useful to customize parser behavior without need to touch
-        parser code in the token method."""
-        return self.lexer.token()
-
-    def token(self):
-        t = self.next_lexer_token()
-
-        # Filter out tokens that the parser is not expecting.
-        while t and t.type in unparsed:
-
-            # Skip over open tags, but keep track of when we see them.
-            if t.type == 'OPEN_TAG':
-                if self.last_token and self.last_token.type == 'SEMI':
-                    # Rewrite ?><?php as a semicolon.
-                    t.type = 'SEMI'
-                    t.value = ';'
-                    break
-                self.last_token = t
-                t = self.next_lexer_token()
-                continue
-
-            # Rewrite <?= to yield an "echo" statement.
-            if t.type == 'OPEN_TAG_WITH_ECHO':
-                t.type = 'ECHO'
-                break
-
-            # Insert semicolons in place of close tags where necessary.
-            if t.type == 'CLOSE_TAG':
-                if self.last_token and \
-                        self.last_token.type in ('OPEN_TAG', 'SEMI', 'COLON',
-                                                 'LBRACE', 'RBRACE'):
-                    # Don't insert semicolons after these tokens.
-                    pass
-                else:
-                    # Rewrite close tag as a semicolon.
-                    t.type = 'SEMI'
-                    break
-
-            t = self.next_lexer_token()
-
-        self.last_token = t
-        return t
-
-    # Iterator interface
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        t = self.token()
-        if t is None:
-            raise StopIteration
-        return t
-
-    __next__ = next
-
-
-

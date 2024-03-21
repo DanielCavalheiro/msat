@@ -1,4 +1,4 @@
-from lexer import *
+from components.abstractor import Abstractor
 
 
 def tokenize(file):
@@ -8,7 +8,7 @@ def tokenize(file):
         print("File not found")
     else:
         with data:
-            lexer = FilteredLexer(lex.lex())
+            lexer = Abstractor()
             lexer.input(data.read())
 
             while True:
@@ -19,5 +19,5 @@ def tokenize(file):
 
 
 if __name__ == '__main__':
-    f = "C:/Users/danie/OneDrive/uni/5ºano/tese/hollingworth_app/signup.php"
+    f = "C:/Users/danie/OneDrive/uni/5ºano/tese/hollingworth_app/xss2.php"
     tokenize(f)
