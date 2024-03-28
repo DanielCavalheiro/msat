@@ -12,7 +12,7 @@ vulnerabilities:
                                        "mysqli_real_query", "mysqli_master_query", "mysqli_multi_query",
                                        "mysqli_stmt_execute", "mysqli_execute" ],
       sanitization_functions: [ "mysql_escape_string", "mysql_real_escape_string", "mysqli_escape_string",
-                                "mysqli_real_escape_string", "mysqli_stmt_bind_param" ]
+                                "mysqli_real_escape_string", "mysqli_stmt_bind_param"]
   }
 
   #- { name: "Command Injection", sensitive_sinks: [ "exec", "passthru", "proc_open", "shell_exec", "system" ],

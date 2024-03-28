@@ -3,6 +3,7 @@
 
 import re
 import yaml
+from ply.lex import TOKEN
 
 states = (
     ('php', 'exclusive'),
@@ -41,44 +42,55 @@ filtered = (
 
     # Comments
     'COMMENT', 'DOC_COMMENT',
+    
+    # Delimiters
+    'LPAREN', 'LBRACE', 'COMMA',  'QUOTE',
+
+    # Escaping from HTML
+    'INLINE_HTML',
+
 )
 
 tokens = reserved + filtered + (
-    # Operators
-    'PLUS', 'MINUS', 'MUL', 'DIV', 'MOD', 'AND', 'OR', 'NOT', 'XOR', 'SL',
-    'SR', 'BOOLEAN_AND', 'BOOLEAN_OR', 'BOOLEAN_NOT', 'IS_SMALLER',
-    'IS_GREATER', 'IS_SMALLER_OR_EQUAL', 'IS_GREATER_OR_EQUAL', 'IS_EQUAL',
-    'IS_NOT_EQUAL', 'IS_IDENTICAL', 'IS_NOT_IDENTICAL',
+    # # Operators
+    # 'PLUS', 'MINUS', 'MUL', 'DIV', 'MOD', 'AND', 'OR', 'NOT', 'XOR', 'SL',
+    # 'SR', 'BOOLEAN_AND', 'BOOLEAN_OR', 'BOOLEAN_NOT', 'IS_SMALLER',
+    # 'IS_GREATER', 'IS_SMALLER_OR_EQUAL', 'IS_GREATER_OR_EQUAL', 'IS_EQUAL',
+    # 'IS_NOT_EQUAL', 'IS_IDENTICAL', 'IS_NOT_IDENTICAL',
 
-    # Assignment operators
-    'EQUALS', 'MUL_EQUAL', 'DIV_EQUAL', 'MOD_EQUAL', 'PLUS_EQUAL',
-    'MINUS_EQUAL', 'SL_EQUAL', 'SR_EQUAL', 'AND_EQUAL', 'OR_EQUAL',
-    'XOR_EQUAL', 'CONCAT_EQUAL',
+    # # Assignment operators
+    # 'EQUALS', 'MUL_EQUAL', 'DIV_EQUAL', 'MOD_EQUAL', 'PLUS_EQUAL',
+    # 'MINUS_EQUAL', 'SL_EQUAL', 'SR_EQUAL', 'AND_EQUAL', 'OR_EQUAL',
+    # 'XOR_EQUAL', 'CONCAT_EQUAL',
 
-    # Increment/decrement
-    'INC', 'DEC',
+    # # Increment/decrement
+    # 'INC', 'DEC',
+
+    # All above operators are replaced by the following
+    'OPERATOR',
 
     # Arrows
     'OBJECT_OPERATOR', 'DOUBLE_ARROW', 'DOUBLE_COLON',
 
+    'VARIABLE',
+
     # Delimiters
-    'LPAREN', 'RPAREN', 'LBRACKET', 'RBRACKET', 'LBRACE', 'RBRACE', 'DOLLAR',
-    'COMMA', 'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
+    'RPAREN',  'LBRACKET', 'RBRACKET',  'RBRACE', 'DOLLAR',
+    'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
 
     # Casts
     'ARRAY_CAST', 'BINARY_CAST', 'BOOL_CAST', 'DOUBLE_CAST', 'INT_CAST',
     'OBJECT_CAST', 'STRING_CAST', 'UNSET_CAST',
 
-    # Escaping from HTML
-    'INLINE_HTML',
+
 
     # Identifiers and reserved words
     'DIR', 'FILE', 'LINE', 'FUNC_C', 'CLASS_C', 'METHOD_C', 'NS_C',
     'LOGICAL_AND', 'LOGICAL_OR', 'LOGICAL_XOR',
     'HALT_COMPILER',
-    'STRING', 'VARIABLE',
+    'STRING',
     'LNUMBER', 'DNUMBER', 'NUM_STRING',
-    'CONSTANT_ENCAPSED_STRING', 'ENCAPSED_AND_WHITESPACE', 'QUOTE',
+    'CONSTANT_ENCAPSED_STRING', 'ENCAPSED_AND_WHITESPACE',
     'DOLLAR_OPEN_CURLY_BRACES', 'STRING_VARNAME', 'CURLY_OPEN',
 
     # Heredocs
@@ -94,7 +106,6 @@ tokens = reserved + filtered + (
     'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF'
 )
 
-
 # Newlines
 def t_php_WHITESPACE(t):
     r'[ \t\r\n]+'
@@ -102,51 +113,64 @@ def t_php_WHITESPACE(t):
     return t
 
 
-# Operators
-t_php_PLUS = r'\+'
-t_php_MINUS = r'-'
-t_php_MUL = r'\*'
-t_php_DIV = r'/'
-t_php_MOD = r'%'
-t_php_AND = r'&'
-t_php_OR = r'\|'
-t_php_NOT = r'~'
-t_php_XOR = r'\^'
-t_php_SL = r'<<'
-t_php_SR = r'>>'
-t_php_BOOLEAN_AND = r'&&'
-t_php_BOOLEAN_OR = r'\|\|'
-t_php_BOOLEAN_NOT = r'!'
-t_php_IS_SMALLER = r'<'
-t_php_IS_GREATER = r'>'
-t_php_IS_SMALLER_OR_EQUAL = r'<='
-t_php_IS_GREATER_OR_EQUAL = r'>='
-t_php_IS_EQUAL = r'=='
-t_php_IS_NOT_EQUAL = r'(!=(?!=))|(<>)'
-t_php_IS_IDENTICAL = r'==='
-t_php_IS_NOT_IDENTICAL = r'!=='
+## Operators
+# t_php_PLUS = r'\+'
+# t_php_MINUS = r'-'
+# t_php_MUL = r'\*'
+# t_php_DIV = r'/'
+# t_php_MOD = r'%'
+# t_php_AND = r'&'
+# t_php_OR = r'\|'
+# t_php_NOT = r'~'
+# t_php_XOR = r'\^'
+# t_php_SL = r'<<'
+# t_php_SR = r'>>'
+# t_php_BOOLEAN_AND = r'&&'
+# t_php_BOOLEAN_OR = r'\|\|'
+# t_php_BOOLEAN_NOT = r'!'
+# t_php_IS_SMALLER = r'<'
+# t_php_IS_GREATER = r'>'
+# t_php_IS_SMALLER_OR_EQUAL = r'<='
+# t_php_IS_GREATER_OR_EQUAL = r'>='
+# t_php_IS_EQUAL = r'=='
+# t_php_IS_NOT_EQUAL = r'(!=(?!=))|(<>)'
+# t_php_IS_IDENTICAL = r'==='
+# t_php_IS_NOT_IDENTICAL = r'!=='
+#
+# # Assignment operators
+# t_php_EQUALS = r'='
+# t_php_MUL_EQUAL = r'\*='
+# t_php_DIV_EQUAL = r'/='
+# t_php_MOD_EQUAL = r'%='
+# t_php_PLUS_EQUAL = r'\+='
+# t_php_MINUS_EQUAL = r'-='
+# t_php_SL_EQUAL = r'<<='
+# t_php_SR_EQUAL = r'>>='
+# t_php_AND_EQUAL = r'&='
+# t_php_OR_EQUAL = r'\|='
+# t_php_XOR_EQUAL = r'\^='
+# t_php_CONCAT_EQUAL = r'\.='
+#
+# # Increment/decrement
+# t_php_INC = r'\+\+'
+# t_php_DEC = r'--'
+#
+# # Arrows
+# t_php_DOUBLE_ARROW = r'=>'
+# t_php_DOUBLE_COLON = r'::'
 
-# Assignment operators
-t_php_EQUALS = r'='
-t_php_MUL_EQUAL = r'\*='
-t_php_DIV_EQUAL = r'/='
-t_php_MOD_EQUAL = r'%='
-t_php_PLUS_EQUAL = r'\+='
-t_php_MINUS_EQUAL = r'-='
-t_php_SL_EQUAL = r'<<='
-t_php_SR_EQUAL = r'>>='
-t_php_AND_EQUAL = r'&='
-t_php_OR_EQUAL = r'\|='
-t_php_XOR_EQUAL = r'\^='
-t_php_CONCAT_EQUAL = r'\.='
+operator_patterns = [
+    r'<=', r'>=', r'==', r'(!=(?!=))|(<>)',
+    r'===', r'!==', r'\*=', r'/=', r'%=', r'\+=', r'-=', r'<<=', r'>>=',
+    r'&=', r'\|=', r'\^=', r'\.=', r'\+\+', r'--', r'=>', r'::',
+    r'=', r'\+', r'-', r'\*', r'/', r'%', r'&', r'\|', r'~', r'\^', r'<<', r'>>',
+    r'&&', r'\|\|', r'!', r'<', r'>',
+]
 
-# Increment/decrement
-t_php_INC = r'\+\+'
-t_php_DEC = r'--'
 
-# Arrows
-t_php_DOUBLE_ARROW = r'=>'
-t_php_DOUBLE_COLON = r'::'
+@TOKEN('|'.join(operator_patterns))
+def t_php_OPERATOR(t):
+    return t
 
 
 def t_php_OBJECT_OPERATOR(t):
@@ -287,6 +311,7 @@ for r in reserved:
 def t_php_STRING(t):
     r'[A-Za-z_][\w_]*'
     t.type = reserved_map.get(t.value.upper(), 'STRING')
+
     return t
 
 
