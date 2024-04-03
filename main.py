@@ -17,7 +17,7 @@ def tokenize(file):
                     break
                 print(token)
 
-
+                
 if __name__ == '__main__':
-    f = "C:/Users/danie/OneDrive/uni/5ºano/tese/hollingworth_app/xss2.php"
+    f = "/home/dani/tese/hollingworth_app/xss2.php"
     tokenize(f)
