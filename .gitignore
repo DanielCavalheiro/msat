@@ -10,3 +10,4 @@
 /copilot/chatSessions
 .venv/
 components/__pycache__/
+*.pyc

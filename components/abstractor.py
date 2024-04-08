@@ -1,5 +1,6 @@
 import components.lexer as token_rules
 import ply.lex as lex
+from utils.stack import Stack
 
 
 class IntermediateToken:
@@ -24,14 +25,19 @@ class Abstractor:
 
         # Additional ITL attributes
         self.depth = 0
-        self.order = 0
-        self.flow_type = 0
+        self.order = Stack()
+        self.flow_type = Stack()
 
         # Abstracting vars
         self.var_abstractor = {}
         self.var_count = 0
         self.op_abstractor = {}
         self.op_count = 0
+
+        # Auxiliary variables
+        self.is_single_line_condition = True
+
+
 
     @property
     def lineno(self):
@@ -61,7 +67,7 @@ class Abstractor:
     def token(self):
         t = self.next_lexer_token()
 
-        # Filter out tokens that are not needed fpr analysis.
+        # Filter out tokens that are not needed for analysis.
         while t and t.type in token_rules.filtered:
 
             # Skip over open tags, but keep track of when we see them.
@@ -113,10 +119,23 @@ class Abstractor:
                     self.op_count += 1
                     self.op_abstractor[t.value] = f'OP{self.op_count}'
                     t.type = f'OP{self.op_count}'
+            case 'IF':
+                self.depth += 1
+                self.order.push(1)
+                self.flow_type.push(self.flow_type.peek()+1)
+            case 'RBRACE':
+                if not self.flow_type.isEmpty():
+                    flow_type = self.flow_type.pop()
+                    if flow_type == -1:
+                        self.depth=0
+                    else:
+                        self.depth -= 1
+                    self.order
+
 
         self.last_token = t
 
-        return IntermediateToken(t.type, t.lineno, self.depth, self.order, self.flow_type)
+        return IntermediateToken(t.type, t.lineno, self.depth, self.order.peek(), self.flow_type.peek())
 
     # Iterator interface
     def __iter__(self):
@@ -129,3 +148,5 @@ class Abstractor:
         return t
 
     __next__ = next
+    
+    
