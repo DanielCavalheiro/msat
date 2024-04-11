@@ -1,3 +1,5 @@
+"""Module for Lexer rules"""
+
 # module: lexer.py
 # This module just contains the lexing rules. Adapted from viraptor/phply
 
@@ -42,9 +44,9 @@ filtered = (
 
     # Comments
     'COMMENT', 'DOC_COMMENT',
-    
+
     # Delimiters
-    'LPAREN', 'LBRACE', 'COMMA',  'QUOTE',
+    'LPAREN', 'COMMA',  'QUOTE',
 
     # Escaping from HTML
     'INLINE_HTML',
@@ -75,7 +77,7 @@ tokens = reserved + filtered + (
     'VARIABLE',
 
     # Delimiters
-    'RPAREN',  'LBRACKET', 'RBRACKET',  'RBRACE', 'DOLLAR',
+    'RPAREN',  'LBRACKET', 'RBRACKET',  'LBRACE', 'RBRACE', 'DOLLAR',
     'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
 
     # Casts
@@ -102,18 +104,20 @@ tokens = reserved + filtered + (
     # Backtick
     'BACKTICK',
 
-    # Usefull for analysis
+    # Useful for analysis
     'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF'
 )
 
 # Newlines
+
+
 def t_php_WHITESPACE(t):
     r'[ \t\r\n]+'
     t.lexer.lineno += t.value.count("\n")
     return t
 
 
-## Operators
+# Operators
 # t_php_PLUS = r'\+'
 # t_php_MINUS = r'-'
 # t_php_MUL = r'\*'
@@ -246,7 +250,8 @@ def t_php_COMMENT(t):
 
 def t_OPEN_TAG(t):
     r'<[?%](([Pp][Hh][Pp][ \t\r\n]?)|=)?'
-    if '=' in t.value: t.type = 'XSS_SENS'  # This is the same as echo statement, so it's a xss sensitive sink
+    if '=' in t.value:
+        t.type = 'XSS_SENS'  # This is the same as echo statement, so it's a xss sensitive sink
     t.lexer.lineno += t.value.count("\n")
     t.lexer.begin('php')
     return t
@@ -284,7 +289,7 @@ reserved_map = {
 }
 
 tainted_variables = []
-with open('components/knowledge_source.yaml') as file:
+with open('components/knowledge_source.yaml', encoding='utf-8') as file:
     try:
         knowledge = yaml.safe_load(file)
 
