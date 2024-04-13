@@ -1,4 +1,6 @@
 from components.abstractor import Abstractor
+# from ply.lex import lex
+# import components.lexer as token_rules
 
 
 def tokenize(file):

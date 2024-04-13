@@ -35,6 +35,7 @@ class Abstractor:
         # Auxiliary variables
         self.in_condition = False
         self.control_flow = []
+        self.rparen_count = 0
 
     @property
     def lineno(self):
@@ -73,15 +74,21 @@ class Abstractor:
         # Will reach this code if the last token was a control flow token
         # Check if its a condition with one line or not
         # and skip over the tokens until the condition ends
+        # TODO: Should not filter out conditions
         while t and self.in_condition:
-            # TODO: There could be an expression with ) in the condition
-            if t.type == "RPAREN":
-                self.in_condition = False
-                t = self.next_lexer_token()
+            if t.type == "LPAREN":
+                self.rparen_count += 1
             while t and t.type in token_rules.filtered:
                 t = self.next_lexer_token()
+            if t.type == "RPAREN":
+                if self.rparen_count == 0:
+                    self.in_condition = False
+                    t = self.next_lexer_token()
+                    while t and t.type in token_rules.filtered:
+                        t = self.next_lexer_token()
+                self.rparen_count -= 1
             if t and t.type == "LBRACE":
-                self.control_flow[-1] = False
+                self.control_flow[-1][0] = False
                 self.in_condition = False
             t = self.next_lexer_token()
 
@@ -141,16 +148,31 @@ class Abstractor:
                     self.op_abstractor[t.value] = f"OP{self.op_count}"
                     t.type = f"OP{self.op_count}"
             case "IF" | "ELSE" | "ELSEIF" | "WHILE" | "FOR":  # TODO: Missing "FOREACH" "SWITCH" "DO"
-                self.control_flow.append(True)
+                self.control_flow.append([True, 1])  # 1 for if/while/for
                 self.in_condition = True
+            case "DO":
+                self.control_flow.append([True, 2])  # 2 for do
+                while t and t.type in token_rules.filtered:
+                    t = self.next_lexer_token()
+                if t and t.type == "LBRACE":
+                    self.control_flow[-1][0] = False
             case "SEMI":
-                if self.control_flow and self.control_flow[-1] is True:
-                    self.control_flow.pop()
+                if self.control_flow and self.control_flow[-1][0] is True:
                     t.type = "END_CF"
+                    if self.control_flow[-1][1] == 2:
+                        while_tokens = self.next_lexer_token()
+                        while while_tokens and while_tokens.type != "SEMI":  # Filter out the while condition
+                            while_tokens = self.next_lexer_token()
+                    self.control_flow.pop()
+
             case "RBRACE":
-                if self.control_flow and self.control_flow[-1] is False:
-                    self.control_flow.pop()
+                if self.control_flow and self.control_flow[-1][0] is False:
                     t.type = "END_CF"
+                    if self.control_flow[-1][1] == 2:
+                        while_tokens = self.next_lexer_token()
+                        while while_tokens and while_tokens.type != "SEMI":  # Filter out the while condition
+                            while_tokens = self.next_lexer_token()
+                    self.control_flow.pop()
 
         self.last_token = t
 
