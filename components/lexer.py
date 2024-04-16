@@ -46,7 +46,7 @@ filtered = (
     'COMMENT', 'DOC_COMMENT',
 
     # Delimiters
-    'LPAREN', 'COMMA',  'QUOTE',
+    'COMMA',  'QUOTE',
 
     # Escaping from HTML
     'INLINE_HTML',
@@ -77,7 +77,7 @@ tokens = reserved + filtered + (
     'VARIABLE',
 
     # Delimiters
-    'RPAREN',  'LBRACKET', 'RBRACKET',  'LBRACE', 'RBRACE', 'DOLLAR',
+    'LPAREN', 'RPAREN',  'LBRACKET', 'RBRACKET',  'LBRACE', 'RBRACE', 'DOLLAR',
     'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
 
     # Casts

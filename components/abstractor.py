@@ -1,5 +1,6 @@
 """Module for abstracting tokens from the lexer into intermediate tokens."""
 
+from unittest import skipUnless
 from ply.lex import lex
 import components.lexer as token_rules
 
@@ -22,20 +23,23 @@ class Abstractor:
     """Abstractor component class to abstract tokens from the lexer."""
 
     def __init__(self):
+        self.peeked_token = None
         # Lexer setup
         self.lexer = lex(module=token_rules)
         self.last_token = None
 
-        # Abstracting vars
+        # Abstracting variables/operations
         self.var_abstractor = {}
         self.var_count = 0
         self.op_abstractor = {}
         self.op_count = 0
 
-        # Auxiliary variables
-        self.in_condition = False
-        self.control_flow = []
+        # Auxiliary variables for code context
+        self.in_parens = False
+        self.code_block = []
+        self.check_if_oneliner = False
         self.rparen_count = 0
+        self.in_func_decl = False
 
     @property
     def lineno(self):
@@ -63,34 +67,23 @@ class Abstractor:
         """Set the input data for the lexer."""
         self.lexer.input(data)
 
+    def peek(self):
+        if self.peeked_token is None:
+            self.peeked_token = self.__skip_useless()
+        return self.peeked_token
+
     def next_lexer_token(self):
         """Get the next token from the lexer."""
-        return self.lexer.token()
+        if self.peeked_token is not None:
+            token = self.peeked_token
+            self.peeked_token = None
+        else:
+            token = self.lexer.token()
+        return token
 
     def token(self):
         """Get the next token from the lexer, abstracted."""
         t = self.next_lexer_token()
-
-        # Will reach this code if the last token was a control flow token
-        # Check if its a condition with one line or not
-        # and skip over the tokens until the condition ends
-        # TODO: Should not filter out conditions
-        while t and self.in_condition:
-            if t.type == "LPAREN":
-                self.rparen_count += 1
-            while t and t.type in token_rules.filtered:
-                t = self.next_lexer_token()
-            if t.type == "RPAREN":
-                if self.rparen_count == 0:
-                    self.in_condition = False
-                    t = self.next_lexer_token()
-                    while t and t.type in token_rules.filtered:
-                        t = self.next_lexer_token()
-                self.rparen_count -= 1
-            if t and t.type == "LBRACE":
-                self.control_flow[-1][0] = False
-                self.in_condition = False
-            t = self.next_lexer_token()
 
         # Filter out tokens that are not needed for analysis.
         while t and t.type in token_rules.filtered:
@@ -128,12 +121,23 @@ class Abstractor:
 
             t = self.next_lexer_token()
 
+        # Will reach this code if the last token was a right parenthesis in a condition statement token
+        # Check if its a condition with one line or not
+        if self.check_if_oneliner:
+            if t and t.type == "LBRACE":
+                # Set the oneliner flag to False
+                self.code_block[-1][0] = False
+                t = self.__skip_useless()
+            self.check_if_oneliner = False
+
         # Reached end of the tokens
         if not t:
             return
 
         match t.type:
             case "VARIABLE":
+                if self.code_block and self.code_block[-1][1] == 0:
+                    t.value = self.code_block[-1][2] + ":" + t.value
                 if t.value in self.var_abstractor:
                     t.type = self.var_abstractor[t.value]
                 else:
@@ -147,32 +151,67 @@ class Abstractor:
                     self.op_count += 1
                     self.op_abstractor[t.value] = f"OP{self.op_count}"
                     t.type = f"OP{self.op_count}"
-            case "IF" | "ELSE" | "ELSEIF" | "WHILE" | "FOR":  # TODO: Missing "FOREACH" "SWITCH" "DO"
-                self.control_flow.append([True, 1])  # 1 for if/while/for
-                self.in_condition = True
+            case "IF" | "ELSEIF" | "WHILE" | "FOR" | "FOREACH" | "SWITCH":
+                # oneliner flag and 1 for if/elseif/while/for
+                self.code_block.append([True, 1])
+                self.in_parens = True
+                self.__skip_until("LPAREN")
+            case "ELSE":
+                # oneliner flag and 2 for else
+                self.code_block.append([True, 2])
+                self.check_if_oneliner = True
             case "DO":
-                self.control_flow.append([True, 2])  # 2 for do
-                while t and t.type in token_rules.filtered:
-                    t = self.next_lexer_token()
-                if t and t.type == "LBRACE":
-                    self.control_flow[-1][0] = False
+                # oneliner flag and 3 for do
+                self.code_block.append([True, 3])
+                self.check_if_oneliner = True
+            case "LPAREN":
+                if self.in_parens:
+                    self.rparen_count += 1
+                if self.last_token and "FUNC_CALL" in self.last_token.type:
+                    pass
+            case "RPAREN":
+                if self.in_parens:
+                    if self.rparen_count == 0:
+                        self.in_parens = False
+                        t.type = "END_PARENS"
+                        # If it's not a do-while or function block then next is a condition
+                        if self.code_block and self.code_block[-1][1] not in [0, 3]:
+                            self.check_if_oneliner = True
+                    else:
+                        self.rparen_count -= 1
             case "SEMI":
-                if self.control_flow and self.control_flow[-1][0] is True:
+                if self.code_block and self.code_block[-1][0] is True:
                     t.type = "END_CF"
-                    if self.control_flow[-1][1] == 2:
-                        while_tokens = self.next_lexer_token()
-                        while while_tokens and while_tokens.type != "SEMI":  # Filter out the while condition
-                            while_tokens = self.next_lexer_token()
-                    self.control_flow.pop()
-
+                    if self.code_block[-1][1] == 3:
+                        self.in_parens = True
+                        self.__skip_until("WHILE")
+                    self.code_block.pop()
             case "RBRACE":
-                if self.control_flow and self.control_flow[-1][0] is False:
-                    t.type = "END_CF"
-                    if self.control_flow[-1][1] == 2:
-                        while_tokens = self.next_lexer_token()
-                        while while_tokens and while_tokens.type != "SEMI":  # Filter out the while condition
-                            while_tokens = self.next_lexer_token()
-                    self.control_flow.pop()
+                if self.code_block:
+                    if self.code_block[-1][1] == 0:
+                        t.type = "END_FUNC"
+                    elif self.code_block[-1][0] is False:
+                        t.type = "END_CF"
+                        if self.code_block[-1][1] == 3:
+                            self.in_parens = True
+                            self.__skip_until("WHILE")
+                    self.code_block.pop()
+            case "FUNCTION":
+                self.code_block.append([False, 0, ""])
+                self.in_func_decl = True
+            case "STRING":
+                if self.in_func_decl:
+                    self.code_block[-1][2] = t.value
+                    t.type = "FUNC:" + t.value
+                    self.__skip_until("LPAREN")
+                    self.in_parens = True
+                    self.in_func_decl = False
+                else:
+                    next_token = self.peek()
+                    if next_token and next_token.type == "LPAREN":
+                        t.type = "FUNC_CALL:" + t.value
+                        self.peeked_token = None
+                        self.in_parens = True
 
         self.last_token = t
 
@@ -189,3 +228,17 @@ class Abstractor:
         return t
 
     # __next__ = next
+
+    def __skip_useless(self):
+        """Skip over tokens that are not needed for analysis."""
+        t = self.next_lexer_token()
+        while t and t.type in token_rules.filtered:
+            t = self.next_lexer_token()
+        return t
+
+    def __skip_until(self, token_type):
+        """Skip tokens until a token of the given type is found."""
+        t = self.next_lexer_token()
+        while t and t.type != token_type:
+            t = self.next_lexer_token()
+        return t
