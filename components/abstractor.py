@@ -201,15 +201,16 @@ class Abstractor:
                 self.in_func_decl = True
             case "STRING":
                 if self.in_func_decl:
-                    self.code_block[-1][2] = t.value
-                    t.type = "FUNC:" + t.value
+                    func_id = str(hash(t.value))
+                    self.code_block[-1][2] = func_id
+                    t.type = "FUNC:" + func_id
                     self.__skip_until("LPAREN")
                     self.in_parens = True
                     self.in_func_decl = False
                 else:
                     next_token = self.peek()
                     if next_token and next_token.type == "LPAREN":
-                        t.type = "FUNC_CALL:" + t.value
+                        t.type = "FUNC_CALL:" + str(hash(t.value))
                         self.peeked_token = None
                         self.in_parens = True
 
