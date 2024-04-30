@@ -1,22 +1,7 @@
 """Module for abstracting tokens from the lexer into intermediate tokens."""
 
-from unittest import skipUnless
 from ply.lex import lex
 import components.lexer as token_rules
-
-
-class IntermediateToken:
-    """Intermediate token class to represent tokens after abstracting."""
-
-    def __init__(self, token_type, line_num, depth, order, flow_type):
-        self.token_type = token_type
-        self.line_num = line_num
-        self.depth = depth
-        self.order = order
-        self.flow_type = flow_type
-
-    def __str__(self):
-        return f"IToken({self.token_type}, {self.line_num}, {self.depth}, {self.order}, {self.flow_type})"
 
 
 class Abstractor:
@@ -83,6 +68,7 @@ class Abstractor:
 
     def token(self):
         """Get the next token from the lexer, abstracted."""
+        # TODO: handle concataenededd string variables
         t = self.next_lexer_token()
 
         # Filter out tokens that are not needed for analysis.
@@ -144,7 +130,7 @@ class Abstractor:
                     self.var_count += 1
                     self.var_abstractor[t.value] = f"VAR{self.var_count}"
                     t.type = f"VAR{self.var_count}"
-            case "OPERATOR":
+            case "OPERATOR" | "CONCAT":
                 if t.value in self.op_abstractor:
                     t.type = self.op_abstractor[t.value]
                 else:

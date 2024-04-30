@@ -1,4 +1,6 @@
 from components.abstractor import Abstractor
+from components.correlator import Correlator
+
 # from ply.lex import lex
 # import components.lexer as token_rules
 
@@ -12,12 +14,20 @@ def tokenize(file):
         with data:
             lexer = Abstractor()
             lexer.input(data.read())
+            data_structure = {}
+            correlator = Correlator(lexer, None, None, data_structure, 0, 0, 0)
+            correlator.correlate()
 
-            while True:
-                token = lexer.token()
-                if not token:
-                    break
-                print(token)
+            for k in correlator.data_structure:
+                print(str(k))
+                for v in correlator.data_structure[k]:
+                    print("\t" + str(v))
+
+            # while True:
+            #     token = lexer.token()
+            #     if not token:
+            #         break
+            #     print(token)
 
 
 if __name__ == '__main__':
