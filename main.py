@@ -14,9 +14,8 @@ def tokenize(file):
         with data:
             lexer = Abstractor()
             lexer.input(data.read())
-            data_structure = {}
-            correlator = Correlator(lexer, None, None, data_structure, 0, 0, 0)
-            correlator.correlate()
+            correlator = Correlator(lexer)
+            correlator.correlate(depth=0, order=0, flow_type=0)
 
             for k in correlator.data_structure:
                 print(str(k))
