@@ -51,6 +51,9 @@ filtered = (
     # Escaping from HTML
     'INLINE_HTML',
 
+    # Backtick
+    'BACKTICK',
+
 )
 
 tokens = reserved + filtered + (
@@ -100,9 +103,6 @@ tokens = reserved + filtered + (
 
     # Nowdocs
     'START_NOWDOC', 'END_NOWDOC',
-
-    # Backtick
-    'BACKTICK',
 
     # Useful for analysis
     'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF'
