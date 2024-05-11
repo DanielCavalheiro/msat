@@ -41,12 +41,12 @@ class Correlator:
                 break  # End of correlation at current depth
 
             match self.current_token.token_type:
-                ### Handle assignment operations ###
+                # ----------------------- Handle assignment operations ----------------------- #
                 case "OP0":  # FIXME: This is a temporary solution is it good?
                     if self.last_token and "VAR" in self.last_token.token_type:
                         self.__handle_assignment(self.last_token)
 
-                ### Handle control flows ###
+                # --------------------------- Handle control flows --------------------------- #
                 case "IF":
                     self.control_flow_counter += 1
                     elseif_counter = 1  # starts at 1 because of the IF
@@ -62,7 +62,7 @@ class Correlator:
                     self.control_flow_counter += 1
                     self.__correlate_next_depth(self.control_flow_counter, 1)
 
-                ### Handle possible vulnerabilities ###
+                # ---------------------- Handle possible vulnerabilities --------------------- #
                 case "INPUT":
                     pass
                 # XSS
