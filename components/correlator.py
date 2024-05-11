@@ -1,7 +1,7 @@
-"""Correlator component to correlate abstracted tokens."""
+"""Module for the Correlator component"""
 
 from components.abstractor import Abstractor
-from utils.abstract_token import AbsToken
+from utils.different_tokens import AbsToken
 
 
 class Correlator:

@@ -17,8 +17,7 @@ def generate_key(password):
 
 def encrypt_sse(data, password):
     """Encrypts data using deterministic AES in SIV mode."""
-    key = generate_key(password)
-    cipher = AES.new(key, AES.MODE_SIV)
+    cipher = AES.new(password, AES.MODE_SIV)
     ciphertext, tag = cipher.encrypt_and_digest(data.encode())
     return ciphertext + tag
 
@@ -26,8 +25,7 @@ def encrypt_sse(data, password):
 # Here for testing purposes and will not be used in the final implementation
 def decrypt_sse(encrypted_data, password):
     """Decrypts data using deterministic AES in SIV mode."""
-    key = generate_key(password)
-    cipher = AES.new(key, AES.MODE_SIV)
+    cipher = AES.new(password, AES.MODE_SIV)
     ciphertext, tag = encrypted_data[:-16], encrypted_data[-16:]
     decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
     return decrypted_data.decode()
