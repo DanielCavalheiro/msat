@@ -110,9 +110,9 @@ class Abstractor:
         # Will reach this code if the last token was a right parenthesis in a condition statement token
         # Check if its a condition with one line or not
         if self.check_if_oneliner:
-            if t and t.type == "LBRACE":
+            if t and t.type != "LBRACE":
                 # Set the oneliner flag to False
-                self.code_block[-1][0] = False
+                self.code_block[-1][0] = True
                 t = self.__skip_useless()
             self.check_if_oneliner = False
 
@@ -132,7 +132,9 @@ class Abstractor:
                     t.type = f"VAR{self.var_count}"
 
             case "OPERATOR" | "CONCAT":
-                if t.value in self.op_abstractor:
+                if t.value == "=":
+                    t.type = "OP0"
+                elif t.value in self.op_abstractor:
                     t.type = self.op_abstractor[t.value]
                 else:
                     self.op_count += 1
