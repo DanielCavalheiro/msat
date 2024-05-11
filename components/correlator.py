@@ -18,6 +18,11 @@ class Correlator:
         self.last_token = None
         self.next_depth_correlator = None
 
+    def update(self, order, flow_type):
+        """Update the correlator with new order and flow type."""
+        self.order = order
+        self.flow_type = flow_type
+
     def correlate(self):
         """Correlate the abstracted tokens."""
         elseif_counter = 0
@@ -29,7 +34,7 @@ class Correlator:
 
             match self.current_token.token_type:
                 ### Handle assignment operations ###
-                case "OP1":  # TODO: Must be ' = ' operation not OP1
+                case "OP0":  # FIXME: This is a temporary solution is it good?
                     if self.last_token and "VAR" in self.last_token.token_type:
                         self.__handle_assignment(self.last_token)
 
@@ -70,7 +75,7 @@ class Correlator:
         t = self.abstractor.token()
         if not t:
             return None
-        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type)
+        return AbsToken(t.type, t.lexpos, self.depth, self.order, self.flow_type)
 
     def __handle_assignment(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""
@@ -79,7 +84,7 @@ class Correlator:
 
         while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER"):
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
             elif ("FUNC_CALL" in self.current_token.token_type):  # TODO - Handle function
@@ -95,11 +100,6 @@ class Correlator:
 
         if assignors:
             self.data_structure[assignee_name] = assignors
-
-    def update(self, order, flow_type):
-        """Update the correlator with new order and flow type."""
-        self.order = order
-        self.flow_type = flow_type
 
     def __correlate_next_depth(self, order: int, flow_type: int):
         if not self.next_depth_correlator:
