@@ -53,6 +53,7 @@ class Abstractor:
         self.lexer.input(data)
 
     def peek(self):
+        """Peek at the next token from the lexer."""
         if self.peeked_token is None:
             self.peeked_token = self.__skip_useless()
         return self.peeked_token
@@ -111,8 +112,9 @@ class Abstractor:
         # Check if its a condition with one line or not
         if self.check_if_oneliner:
             if t and t.type != "LBRACE":
-                # Set the oneliner flag to False
+                # Set the oneliner flag to True
                 self.code_block[-1][0] = True
+            else:
                 t = self.__skip_useless()
             self.check_if_oneliner = False
 

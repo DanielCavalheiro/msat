@@ -25,12 +25,12 @@ def tokenize(file):
                     print("\t" + str(v))
 
             # while True:
-            #    token = lexer.token()
-            #    if not token:
-            #        break
-            #    print(token)
+            #     token = lexer.token()
+            #     if not token:
+            #         break
+            #     print(token)
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss2.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss1.php"
     tokenize(FILE)

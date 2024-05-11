@@ -18,18 +18,26 @@ class Correlator:
         self.last_token = None
         self.next_depth_correlator = None
 
-    def update(self, order, flow_type):
+    def update(self, order, flow_type, current_token, last_token):
         """Update the correlator with new order and flow type."""
         self.order = order
         self.flow_type = flow_type
+        self.current_token = current_token
+        self.last_token = last_token
 
     def correlate(self):
         """Correlate the abstracted tokens."""
         elseif_counter = 0
 
         while True:  # Iterate over the tokens
-            self.current_token = self.__next_token()
-            if not self.current_token or self.current_token.token_type == "END_CF":
+
+            if self.last_token and self.last_token.token_type == "END_CF":
+                # This could happend if the last control flow was a onliner
+                break
+
+            self.current_token = self.__next_token()  # Next token to correalate
+
+            if not self.current_token:
                 break  # End of correlation at current depth
 
             match self.current_token.token_type:
@@ -105,5 +113,6 @@ class Correlator:
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(
                 self.abstractor, self.data_structure, self.depth + 1, flow_type)
-        self.next_depth_correlator.update(order, flow_type)
+        self.next_depth_correlator.update(
+            order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
