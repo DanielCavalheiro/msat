@@ -39,6 +39,12 @@ def encrypt_ope(data, password):
     return ope.encrypt(int(data))
 
 
+def decrypt_ope(encrypted_data, password):
+    """Decrypts data using Order Preserving Encryption."""
+    ope = OPE(password)
+    return ope.decrypt(encrypted_data)
+
+
 # ----------------------------------- HASH ----------------------------------- #
 
 def hash_it(data):

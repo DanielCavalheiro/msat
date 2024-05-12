@@ -1,7 +1,7 @@
 """Module for the Correlator component"""
 
 from components.abstractor import Abstractor
-from utils.different_tokens import AbsToken
+from utils.token_utils import AbsToken
 
 
 class Correlator:
@@ -69,7 +69,7 @@ class Correlator:
                 case "XSS_SENS":
                     self.__handle_assignment(self.current_token)
                 case "XSS_SANF":
-                    pass
+                    pass  # TODO handle this
                 # SQLI
                 case "SQLI_SENS":
                     pass
@@ -83,7 +83,7 @@ class Correlator:
         t = self.abstractor.token()
         if not t:
             return None
-        return AbsToken(t.type, t.lexpos, self.depth, self.order, self.flow_type)
+        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type)
 
     def __handle_assignment(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""

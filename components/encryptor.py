@@ -1,8 +1,9 @@
 """Module for the Encryptor component"""
 
-from utils.different_tokens import AbsToken
-from utils.different_tokens import EncToken
+from utils.token_utils import AbsToken
+from utils.token_utils import EncToken
 import utils.crypto_stuff as crypto_stuff
+import base64
 
 
 class Encryptor:
@@ -12,9 +13,11 @@ class Encryptor:
         pass
 
     def encrypt_data_structure(self, data_structure: dict, password):
+        """Encrypt the data structure with the given password."""
         encrypted_ds = {}  # Encrypted data structure
         for key in data_structure:
-            encrypted_key = crypto_stuff.encrypt_sse(key, password)
+            encrypted_key = base64.b64encode(base64.b64encode(
+                crypto_stuff.encrypt_sse(key, password))).decode("utf-8")
             values = data_structure[key]
             enc_assignors = []
             for value in values:
@@ -23,12 +26,16 @@ class Encryptor:
         return encrypted_ds
 
     def encrypt_knowledge_source(self, knowledge_source, password):
-        pass
+        """Encrypt the knowledge source with the given password."""
 
     def __encrypt_token(self, token: AbsToken, password):
-        token_type = crypto_stuff.encrypt_sse(token.token_type, password)
+        """Encrypt the token with the given password."""
+        token_type = base64.b64encode(base64.b64encode(
+            crypto_stuff.encrypt_sse(token.token_type, password))).decode("utf-8")
+        line_num = base64.b64encode(base64.b64encode(
+            crypto_stuff.encrypt_sse(str(token.line_num), password))).decode("utf-8")
         position = crypto_stuff.encrypt_ope(token.token_pos, password)
         depth = crypto_stuff.encrypt_ope(token.depth, password)
         order = crypto_stuff.encrypt_ope(token.order, password)
         flow_type = crypto_stuff.encrypt_ope(token.flow_type, password)
-        return EncToken(token_type, position, depth, order, flow_type)
+        return EncToken(token_type, line_num, position, depth, order, flow_type)

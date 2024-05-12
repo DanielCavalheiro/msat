@@ -1,8 +1,11 @@
 """ Main file for the project. """
 
+import json
+import base64
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 from components.encryptor import Encryptor
+from utils.token_utils import AbsToken, EncTokenEncoder
 import utils.crypto_stuff as crypto_stuff
 
 
@@ -41,13 +44,36 @@ def tokenize(file):
                 for value in v:
                     print("\t" + str(value))
 
-            # while True:
-            #     token = lexer.token()
-            #     if not token:
-            #         break
-            #     print(token)
+            decoded_ds = {}
+            for k, v in encrypted_ds.items():
+                decoded_key = crypto_stuff.decrypt_sse(
+                    base64.b64decode(base64.b64decode(k)), password)
+                decoded_values = []
+                for value in v:
+                    token_type = crypto_stuff.decrypt_sse(
+                        base64.b64decode(base64.b64decode(value.token_type)), password)
+                    line_num = crypto_stuff.decrypt_sse(
+                        base64.b64decode(base64.b64decode(value.line_num)), password)
+                    position = crypto_stuff.decrypt_ope(
+                        value.token_pos, password)
+                    depth = crypto_stuff.decrypt_ope(value.depth, password)
+                    order = crypto_stuff.decrypt_ope(value.order, password)
+                    flow_type = crypto_stuff.decrypt_ope(
+                        value.flow_type, password)
+                    decoded_values.append(
+                        AbsToken(token_type, line_num, position, depth, order, flow_type))
+                decoded_ds[decoded_key] = decoded_values
+
+            print("\n ------------- Decoded data structure ------------- \n")
+            for k in decoded_ds:
+                print(str(k))
+                for v in decoded_ds[k]:
+                    print("\t" + str(v))
+
+            # with open("encrypted_ds", "w") as f:
+            #    json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss1.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss2.php"
     tokenize(FILE)
