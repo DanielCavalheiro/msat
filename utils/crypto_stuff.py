@@ -1,5 +1,6 @@
 """This module contains functions for encrypting and hashing data."""
 
+import base64
 import hashlib
 import hmac
 from Crypto.Cipher import AES
@@ -19,7 +20,7 @@ def encrypt_sse(data, password):
     """Encrypts data using deterministic AES in SIV mode."""
     cipher = AES.new(password, AES.MODE_SIV)
     ciphertext, tag = cipher.encrypt_and_digest(data.encode())
-    return ciphertext + tag
+    return base64.b64encode(base64.b64encode(ciphertext + tag)).decode("utf-8")
 
 
 # Here for testing purposes and will not be used in the final implementation
@@ -55,6 +56,6 @@ def hash_it(data):
 
 
 def hmac_it(data, password):
-    """Hashes data using HMAC with SHA-256."""
-    h = hmac.new(password.encode(), data.encode(), hashlib.sha256)
-    return h.hexdigest()
+    """Hashes data using HMAC with SHA."""
+    h = hmac.new(password, data.encode(), hashlib.sha1)
+    return base64.b64encode(base64.b64encode(h.hexdigest().encode())).decode("utf-8")

@@ -1,11 +1,9 @@
 """ Main file for the project. """
 
-import json
-import base64
+
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 from components.encryptor import Encryptor
-from utils.token_utils import AbsToken, EncTokenEncoder
 import utils.crypto_stuff as crypto_stuff
 
 
@@ -26,52 +24,55 @@ def tokenize(file):
             correlator = Correlator(lexer, {}, 0, 0)
             correlator.correlate()
 
+            for k, v in correlator.data_structure.items():
+                print(k)
+                for token in v:
+                    print("\t" + str(token))
+
             encryptor = Encryptor()
-            password = crypto_stuff.generate_key("password")
-            encrypted_ds = encryptor.encrypt_data_structure(
-                correlator.data_structure, password)
 
-            for k in correlator.data_structure:
-                print(str(k))
-                for v in correlator.data_structure[k]:
-                    print("\t" + str(v))
+            # Password known only by the client
+            secret_password = crypto_stuff.generate_key("secret_password")
 
-            print("\n ------------- Encrypted data structure ------------- \n")
+            # Password known by the client and the auditor
+            shared_password = crypto_stuff.generate_key("shared_password")
 
-            # iterate over the encrypted_ds and print the values with items() method
-            for k, v in encrypted_ds.items():
-                print(str(k))
-                for value in v:
-                    print("\t" + str(value))
+            encryptor.encrypt_data_structure(
+                correlator.data_structure, secret_password, shared_password)
 
-            decoded_ds = {}
-            for k, v in encrypted_ds.items():
-                decoded_key = crypto_stuff.decrypt_sse(
-                    base64.b64decode(base64.b64decode(k)), password)
-                decoded_values = []
-                for value in v:
-                    token_type = crypto_stuff.decrypt_sse(
-                        base64.b64decode(base64.b64decode(value.token_type)), password)
-                    line_num = crypto_stuff.decrypt_sse(
-                        base64.b64decode(base64.b64decode(value.line_num)), password)
-                    position = crypto_stuff.decrypt_ope(
-                        value.token_pos, password)
-                    depth = crypto_stuff.decrypt_ope(value.depth, password)
-                    order = crypto_stuff.decrypt_ope(value.order, password)
-                    flow_type = crypto_stuff.decrypt_ope(
-                        value.flow_type, password)
-                    decoded_values.append(
-                        AbsToken(token_type, line_num, position, depth, order, flow_type))
-                decoded_ds[decoded_key] = decoded_values
+            encryptor.encrypt_knowledge_source(secret_password)
 
-            print("\n ------------- Decoded data structure ------------- \n")
-            for k in decoded_ds:
-                print(str(k))
-                for v in decoded_ds[k]:
-                    print("\t" + str(v))
 
-            # with open("encrypted_ds", "w") as f:
-            #    json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
+#             with open("encrypted_ds", "r", encoding="utf-8") as f:
+#                 data = json.loads(f.read())
+#                 print(data)
+#                 decoded_ds = {}
+#                 for k, v in data.items():
+#                     decoded_key = crypto_stuff.decrypt_sse(
+#                         base64.b64decode(base64.b64decode(k)), password)
+#                     decoded_values = []
+#                     for value in v:
+#                         token_type = crypto_stuff.decrypt_sse(
+#                             base64.b64decode(base64.b64decode(value["token_type"])), password)
+#                         line_num = crypto_stuff.decrypt_sse(
+#                             base64.b64decode(base64.b64decode(value["line_num"])), password)
+#                         position = crypto_stuff.decrypt_ope(
+#                             value["token_pos"], password)
+#                         depth = crypto_stuff.decrypt_ope(
+#                             value["depth"], password)
+#                         order = crypto_stuff.decrypt_ope(
+#                             value["order"], password)
+#                         flow_type = crypto_stuff.decrypt_ope(
+#                             value["flow_type"], password)
+#                         decoded_values.append(
+#                             AbsToken(token_type, line_num, position, depth, order, flow_type))
+#                     decoded_ds[decoded_key] = decoded_values
+#
+#                 print("\n ------------- Decoded data structure ------------- \n")
+#                 for k in decoded_ds:
+#                     print(str(k))
+#                     for v in decoded_ds[k]:
+#                         print("\t" + str(v))
 
 
 if __name__ == "__main__":

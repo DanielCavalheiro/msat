@@ -38,6 +38,4 @@ class EncTokenEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, EncToken):
             return o.__dict__
-        elif isinstance(o, bytes):
-            return base64.b64encode(o).decode("utf-8")
         return json.JSONEncoder.default(self, o)
