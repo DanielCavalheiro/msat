@@ -39,3 +39,10 @@ class EncTokenEncoder(json.JSONEncoder):
         if isinstance(o, EncToken):
             return o.__dict__
         return json.JSONEncoder.default(self, o)
+
+
+def enc_token_decoder(dct):
+    """JSON decoder for EncToken class."""
+    if "token_type" in dct:
+        return EncToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"])
+    return dct

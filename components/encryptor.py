@@ -31,9 +31,6 @@ class Encryptor:
         with open("encrypted_ds", "w", encoding="utf-8") as f:
             json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
 
-    def encrypt_knowledge_source(self, password):
-        """Encrypt the knowledge source with the given password."""
-
     def __encrypt_token(self, token: AbsToken, secret_password, shared_password):
         """Encrypt the token with the given password."""
         if token.token_type in ("INPUT", "XSS_SENS", "XSS_SANF", "SQLI_SENS", "SQLI_SANF"):

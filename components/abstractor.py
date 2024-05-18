@@ -212,6 +212,10 @@ class Abstractor:
                         t.type = "FUNC_CALL:" + str(hash(t.value))
                         self.peeked_token = None
                         self.in_parens = True
+            case "INPUT":
+                next_token = self.peek()
+                if next_token and next_token.type == "LBRACKET":
+                    self.__skip_until("RBRACKET")
 
         self.last_token = t
 
