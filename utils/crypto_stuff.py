@@ -4,7 +4,7 @@ import base64
 import hashlib
 import hmac
 from Crypto.Cipher import AES
-from pyope.ope import OPE
+from pyope.ope import OPE, ValueRange
 
 from utils.token_utils import AbsToken, EncToken
 
@@ -38,13 +38,15 @@ def decrypt_sse(encrypted_data, password):
 
 def encrypt_ope(data, password):
     """Encrypts data using Order Preserving Encryption."""
-    ope = OPE(password)
+    ope = OPE(password, in_range=ValueRange(-1, 2**15-1),
+              out_range=ValueRange(0, 2**31-1))
     return ope.encrypt(int(data))
 
 
 def decrypt_ope(encrypted_data, password):
     """Decrypts data using Order Preserving Encryption."""
-    ope = OPE(password)
+    ope = OPE(password, in_range=ValueRange(-1, 2**15-1),
+              out_range=ValueRange(0, 2**31-1))
     return ope.decrypt(encrypted_data)
 
 

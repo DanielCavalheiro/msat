@@ -30,7 +30,7 @@ class Encryptor:
 
         with open("encrypted_ds", "w", encoding="utf-8") as f:
             # TODO: change back to encrypted_ds
-            json.dump(data_structure, f, cls=EncTokenEncoder, indent=4)
+            json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
 
     def __encrypt_token(self, token: AbsToken, secret_password, shared_password):
         """Encrypt the token with the given password."""

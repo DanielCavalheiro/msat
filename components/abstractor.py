@@ -69,7 +69,6 @@ class Abstractor:
 
     def token(self):
         """Get the next token from the lexer, abstracted."""
-        # TODO: handle concataenededd string variables
         t = self.next_lexer_token()
 
         # Filter out tokens that are not needed for analysis.

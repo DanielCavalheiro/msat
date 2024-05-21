@@ -69,7 +69,7 @@ class Correlator:
                 case "XSS_SENS":
                     self.__handle_assignment(self.current_token)
                 case "XSS_SANF":
-                    pass  # TODO handle this
+                    pass  # TODO handle SANF
                 # SQLI
                 case "SQLI_SENS":
                     pass

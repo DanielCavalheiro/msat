@@ -10,12 +10,6 @@ import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import enc_token_decoder
 
 
-# from ply.lex import lex
-# import components.lexer as token_rules
-
-# TODO comments are being parsed and key in detector must be sink
-
-
 def tokenize(file):
     try:
         data = open(file, "r", encoding="utf-8")
@@ -51,7 +45,8 @@ def tokenize(file):
                     f.read(), object_hook=enc_token_decoder)
 
             detector = Detector(encrypted_ds, shared_password)
-            paths = detector.detect_vulnerability("XSS_SENS")
+            detector.set_vuln_type("XSS")
+            paths = detector.detect_vulnerability()
 
             # print("\n ------------- Detected flows ------------- \n")
             # for k, v in paths.items():
@@ -61,14 +56,13 @@ def tokenize(file):
             #         for token in path:
             #             print("\t" + str(token))
 
-            print("\n ------------- best paths ------------- \n")
+            print("\n ------------- result paths ------------- \n")
             path_counter = 1
             for path in paths:
                 print(path_counter)
                 for token in path:
                     print("\t" + str(token))
                 path_counter += 1
-
 
             #             with open("encrypted_ds", "r", encoding="utf-8") as f:
             #                 data = json.loads(f.read())

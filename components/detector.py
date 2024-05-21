@@ -11,6 +11,7 @@ class Detector:
         self.data_structure = data_structure
         self.shared_password = shared_password
         self.special_tokens = self.__populate_special_tokens()
+        self.vuln_type = None
 
     def __populate_special_tokens(self):
         """Populate the special tokens"""
@@ -22,12 +23,16 @@ class Detector:
             "SQLI_SANF": crypto_stuff.hmac_it("SQLI_SANF", self.shared_password),
         }
 
-    def detect_vulnerability(self, vuln_type: str):
+    def set_vuln_type(self, vuln_type: str):
+        """Sets the vulnerability type"""
+        self.vuln_type = vuln_type
+
+    def detect_vulnerability(self):
         """Detects a vulnerability in the data structure"""
-        if vuln_type not in self.special_tokens:
+        query = self.vuln_type + "_SENS"
+        if query not in self.special_tokens:
             return []
-        # query = self.special_tokens[vuln_type] #TODO uncoment
-        query = vuln_type  # TODO: delete
+        query = self.special_tokens[query]
         if query not in self.data_structure:
             return []
 
@@ -81,7 +86,35 @@ class Detector:
                             best = current_path
             relevant_paths.append(best)
 
-        return relevant_paths
+        # Handle Control Flows
+        candidate_paths = relevant_paths.copy()
+        for relevant_path in relevant_paths:
+            for token in relevant_path:
+                if token.depth > 0:
+                    for path in paths_by_sink[relevant_path[0]]:
+                        if path in candidate_paths:
+                            continue
+                        for current_token in path:
+                            if current_token.token_pos <= token.token_pos:
+                                if current_token.order != token.order:
+                                    candidate_paths.append(path)
+                                elif current_token.order == token.order and current_token.flow_type != token.flow_type:
+                                    candidate_paths.append(path)
+                                elif current_token.order == token.order and current_token.flow_type == token.flow_type and current_token.depth != token.depth:
+                                    candidate_paths.append(path)
+
+        # Check if path ends in Input or has a Sanitization fuction
+        result_paths = []
+        for candidate_path in candidate_paths:
+            for token in candidate_path:
+                if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
+                    break
+
+                if token.token_type == self.special_tokens["INPUT"]:
+                    result_paths.append(candidate_path)
+                    break
+
+        return result_paths
 
     def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
