@@ -11,10 +11,6 @@ class Detector:
         self.data_structure = data_structure
         self.shared_password = shared_password
         self.special_tokens = self.__populate_special_tokens()
-        self.current_path = []  # Current path being analyzedS
-        self.paths = []  # Paths that have been analyzed
-        self.paths_by_sink = {}  # Paths grouped by sink
-        self.visited = []  # Tokens that have been visited
 
     def __populate_special_tokens(self):
         """Populate the special tokens"""
@@ -30,42 +26,73 @@ class Detector:
         """Detects a vulnerability in the data structure"""
         if vuln_type not in self.special_tokens:
             return []
-        query = self.special_tokens[vuln_type]
+        # query = self.special_tokens[vuln_type] #TODO uncoment
+        query = vuln_type  # TODO: delete
         if query not in self.data_structure:
             return []
 
-        self.paths = []
-        self.current_path = []
-        self.visited = []
+        detected_paths = []
         for token in self.data_structure[query]:
-            self.visited.append(token.token_type)
-            self.__detect_flows(token)
+            current_path = []
+            visited = []
+            visited.append(token)
+            self.__detect_flows(detected_paths, current_path, visited, token)
 
-        self.__group_by_sink()
+        # Group paths by sink
+        paths_by_sink = {}
+        for path in detected_paths:
+            sink = path[0]
+            if sink not in paths_by_sink:
+                paths_by_sink[sink] = []
+            paths_by_sink[sink].append(path)
 
-    def __detect_flows(self, current_token: EncToken):
+        # Remove impossible paths
+        possible_paths_by_sink = {}
+        for sink, paths in paths_by_sink.items():
+            possible_paths = []
+            for path in paths:
+                previous_pos = None
+                for token in path:
+                    if previous_pos is None:
+                        previous_pos = token.token_pos
+                    elif previous_pos > token.token_pos:
+                        possible_paths.append(path)
+                        break
+                    previous_pos = token.token_pos
+            possible_paths_by_sink[sink] = possible_paths
+
+        # TODO: what if there are no possible paths?
+
+        # Get best matches
+        relevant_paths = []
+        for sink, paths in possible_paths_by_sink.items():
+            best = None
+            closest = None
+            for i in range(1, max(len(path) for path in paths)):
+                for current_path in paths:
+                    if i < len(current_path):
+                        current_token = current_path[i]
+                        current_sink = current_path[0]
+                        if closest is None:
+                            closest = current_path[i]
+                            best = current_path
+                        elif current_sink.token_pos - current_token.token_pos <= current_sink.token_pos - closest.token_pos:
+                            closest = current_path[i]
+                            best = current_path
+            relevant_paths.append(best)
+
+        return relevant_paths
+
+    def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
-        self.current_path.append(current_token)
+        current_path.append(current_token)
         if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.data_structure:
-            self.paths.append(self.current_path.copy())
+            detected_paths.append(current_path.copy())
         else:
             for token in self.data_structure[current_token.token_type]:
-                if token.token_type not in self.visited:
-                    self.visited.append(token.token_type)
-                    self.__detect_flows(token)
-                    self.current_path.pop()
-                    self.visited.remove(token.token_type)
-
-    def __group_by_sink(self):
-        """Group paths by sink"""
-        for path in self.paths:
-            sink = path[0]
-            if sink not in self.paths_by_sink:
-                self.paths_by_sink[sink] = []
-            self.paths_by_sink[sink].append(path)
-
-    # def __filter_paths(self):
-    #     """Filter paths that are not relevant"""
-    #     relevant_paths = []
-    #     for path in self.paths:
-    #         for i in
+                if token not in visited:
+                    visited.append(token)
+                    self.__detect_flows(
+                        detected_paths, current_path, visited, token)
+                    current_path.pop()
+                    visited.remove(token)

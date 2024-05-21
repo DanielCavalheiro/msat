@@ -117,66 +117,6 @@ def t_php_WHITESPACE(t):
     return t
 
 
-# Operators
-# t_php_PLUS = r'\+'
-# t_php_MINUS = r'-'
-# t_php_MUL = r'\*'
-# t_php_DIV = r'/'
-# t_php_MOD = r'%'
-# t_php_AND = r'&'
-# t_php_OR = r'\|'
-# t_php_NOT = r'~'
-# t_php_XOR = r'\^'
-# t_php_SL = r'<<'
-# t_php_SR = r'>>'
-# t_php_BOOLEAN_AND = r'&&'
-# t_php_BOOLEAN_OR = r'\|\|'
-# t_php_BOOLEAN_NOT = r'!'
-# t_php_IS_SMALLER = r'<'
-# t_php_IS_GREATER = r'>'
-# t_php_IS_SMALLER_OR_EQUAL = r'<='
-# t_php_IS_GREATER_OR_EQUAL = r'>='
-# t_php_IS_EQUAL = r'=='
-# t_php_IS_NOT_EQUAL = r'(!=(?!=))|(<>)'
-# t_php_IS_IDENTICAL = r'==='
-# t_php_IS_NOT_IDENTICAL = r'!=='
-#
-# # Assignment operators
-# t_php_EQUALS = r'='
-# t_php_MUL_EQUAL = r'\*='
-# t_php_DIV_EQUAL = r'/='
-# t_php_MOD_EQUAL = r'%='
-# t_php_PLUS_EQUAL = r'\+='
-# t_php_MINUS_EQUAL = r'-='
-# t_php_SL_EQUAL = r'<<='
-# t_php_SR_EQUAL = r'>>='
-# t_php_AND_EQUAL = r'&='
-# t_php_OR_EQUAL = r'\|='
-# t_php_XOR_EQUAL = r'\^='
-# t_php_CONCAT_EQUAL = r'\.='
-#
-# # Increment/decrement
-# t_php_INC = r'\+\+'
-# t_php_DEC = r'--'
-#
-# # Arrows
-# t_php_DOUBLE_ARROW = r'=>'
-# t_php_DOUBLE_COLON = r'::'
-
-operator_patterns = [
-    r'<=', r'>=', r'==', r'(!=(?!=))|(<>)',
-    r'===', r'!==', r'\*=', r'/=', r'%=', r'\+=', r'-=', r'<<=', r'>>=',
-    r'&=', r'\|=', r'\^=', r'\.=', r'\+\+', r'--', r'=>', r'::',
-    r'=', r'\+', r'-', r'\*', r'/', r'%', r'&', r'\|', r'~', r'\^', r'<<', r'>>',
-    r'&&', r'\|\|', r'!', r'<', r'>',
-]
-
-
-@TOKEN('|'.join(operator_patterns))
-def t_php_OPERATOR(t):
-    return t
-
-
 def t_php_OBJECT_OPERATOR(t):
     r'->'
     if re.match(r'[A-Za-z_]', peek(t.lexer)):
@@ -243,6 +183,67 @@ def t_php_DOC_COMMENT(t):
 def t_php_COMMENT(t):
     r'/\*(.|\n)*?\*/ | //([^?%\n]|[?%](?!>))*\n? | \#([^?%\n]|[?%](?!>))*\n?'
     t.lexer.lineno += t.value.count("\n")
+    return t
+
+# Operators
+
+# t_php_PLUS = r'\+'
+# t_php_MINUS = r'-'
+# t_php_MUL = r'\*'
+# t_php_DIV = r'/'
+# t_php_MOD = r'%'
+# t_php_AND = r'&'
+# t_php_OR = r'\|'
+# t_php_NOT = r'~'
+# t_php_XOR = r'\^'
+# t_php_SL = r'<<'
+# t_php_SR = r'>>'
+# t_php_BOOLEAN_AND = r'&&'
+# t_php_BOOLEAN_OR = r'\|\|'
+# t_php_BOOLEAN_NOT = r'!'
+# t_php_IS_SMALLER = r'<'
+# t_php_IS_GREATER = r'>'
+# t_php_IS_SMALLER_OR_EQUAL = r'<='
+# t_php_IS_GREATER_OR_EQUAL = r'>='
+# t_php_IS_EQUAL = r'=='
+# t_php_IS_NOT_EQUAL = r'(!=(?!=))|(<>)'
+# t_php_IS_IDENTICAL = r'==='
+# t_php_IS_NOT_IDENTICAL = r'!=='
+#
+# # Assignment operators
+# t_php_EQUALS = r'='
+# t_php_MUL_EQUAL = r'\*='
+# t_php_DIV_EQUAL = r'/='
+# t_php_MOD_EQUAL = r'%='
+# t_php_PLUS_EQUAL = r'\+='
+# t_php_MINUS_EQUAL = r'-='
+# t_php_SL_EQUAL = r'<<='
+# t_php_SR_EQUAL = r'>>='
+# t_php_AND_EQUAL = r'&='
+# t_php_OR_EQUAL = r'\|='
+# t_php_XOR_EQUAL = r'\^='
+# t_php_CONCAT_EQUAL = r'\.='
+#
+# # Increment/decrement
+# t_php_INC = r'\+\+'
+# t_php_DEC = r'--'
+#
+# # Arrows
+# t_php_DOUBLE_ARROW = r'=>'
+# t_php_DOUBLE_COLON = r'::'
+
+
+operator_patterns = [
+    r'<=', r'>=', r'==', r'(!=(?!=))|(<>)',
+    r'===', r'!==', r'\*=', r'/=', r'%=', r'\+=', r'-=', r'<<=', r'>>=',
+    r'&=', r'\|=', r'\^=', r'\.=', r'\+\+', r'--', r'=>', r'::',
+    r'=', r'\+', r'-', r'\*', r'/', r'%', r'&', r'\|', r'~', r'\^', r'<<', r'>>',
+    r'&&', r'\|\|', r'!', r'<', r'>',
+]
+
+
+@TOKEN('|'.join(operator_patterns))
+def t_php_OPERATOR(t):
     return t
 
 
