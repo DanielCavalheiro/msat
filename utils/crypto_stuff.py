@@ -6,8 +6,6 @@ import hmac
 from Crypto.Cipher import AES
 from pyope.ope import OPE, ValueRange
 
-from utils.token_utils import AbsToken, EncToken
-
 
 # ------------------------------------ SSE ----------------------------------- #
 
@@ -64,17 +62,13 @@ def hmac_it(data, password):
     h = hmac.new(password, data.encode(), hashlib.sha1)
     return base64.b64encode(base64.b64encode(h.hexdigest().encode())).decode("utf-8")
 
-# ----------------------------- testing purposes ----------------------------- #
 
-
-def decrypt_token(token: EncToken, secret_password):
-    """Decrypts an encrypted token."""
-    token_type = decrypt_sse(base64.b64decode(
-        base64.b64decode(token.token_type)), secret_password)
-    line_num = decrypt_sse(base64.b64decode(
-        base64.b64decode(token.line_num)), secret_password)
-    position = decrypt_ope(token.token_pos, secret_password)
-    depth = decrypt_ope(token.depth, secret_password)
-    order = decrypt_ope(token.order, secret_password)
-    flow_type = decrypt_ope(token.flow_type, secret_password)
-    return AbsToken(token_type, line_num, position, depth, order, flow_type)
+def populate_special_tokens(shared_password):
+    """Populate the special tokens"""
+    return {
+        "INPUT": hmac_it("INPUT", shared_password),
+        "XSS_SENS": hmac_it("XSS_SENS", shared_password),
+        "XSS_SANF": hmac_it("XSS_SANF", shared_password),
+        "SQLI_SENS": hmac_it("SQLI_SENS", shared_password),
+        "SQLI_SANF": hmac_it("SQLI_SANF", shared_password),
+    }

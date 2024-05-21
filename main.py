@@ -1,13 +1,14 @@
 """ Main file for the project. """
 
 
+import base64
 import json
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 from components.detector import Detector
 from components.encryptor import Encryptor
 import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import enc_token_decoder
+from utils.token_utils import AbsToken, EncToken, enc_token_decoder
 
 
 def tokenize(file):
@@ -17,16 +18,14 @@ def tokenize(file):
         print("File not found")
     else:
         with data:
+
+            # -------------------------------- Client side ------------------------------- #
+
             lexer = Abstractor()
             lexer.input(data.read())
 
             correlator = Correlator(lexer, {}, 0, 0)
             correlator.correlate()
-
-            for k, v in correlator.data_structure.items():
-                print(k)
-                for enc_token in v:
-                    print("\t" + str(enc_token))
 
             encryptor = Encryptor()
 
@@ -39,6 +38,8 @@ def tokenize(file):
             encryptor.encrypt_data_structure(
                 correlator.data_structure, secret_password, shared_password)
 
+            # ------------------------------- Auditor Side ------------------------------- #
+
             encrypted_ds = {}
             with open("encrypted_ds", "r", encoding="utf-8") as f:
                 encrypted_ds = json.loads(
@@ -46,54 +47,41 @@ def tokenize(file):
 
             detector = Detector(encrypted_ds, shared_password)
             detector.set_vuln_type("XSS")
-            paths = detector.detect_vulnerability()
+            vulnerable_paths = detector.detect_vulnerability()
 
-            # print("\n ------------- Detected flows ------------- \n")
-            # for k, v in paths.items():
-            #     print(k)
-            #     for path in v:
-            #         print("-")
-            #         for token in path:
-            #             print("\t" + str(token))
+            # ------------------------------- Decode Result (Client Side) ------------------------------ #
 
-            print("\n ------------- result paths ------------- \n")
-            path_counter = 1
-            for path in paths:
-                print(path_counter)
-                for token in path:
-                    print("\t" + str(token))
+            special_tokens = crypto_stuff.populate_special_tokens(
+                shared_password)  # TODO change location
+
+            def decrypt_token(token: EncToken, secret_password):
+                """Decrypts an encrypted token."""
+                if token.token_type == special_tokens["INPUT"]:
+                    token_type = token.token_type
+                else:
+                    token_type = crypto_stuff.decrypt_sse(base64.b64decode(
+                        base64.b64decode(token.token_type)), secret_password)
+                line_num = crypto_stuff.decrypt_sse(base64.b64decode(
+                    base64.b64decode(token.line_num)), secret_password)
+                position = crypto_stuff.decrypt_ope(
+                    token.token_pos, secret_password)
+                depth = crypto_stuff.decrypt_ope(
+                    token.depth, secret_password)
+                order = crypto_stuff.decrypt_ope(
+                    token.order, secret_password)
+                flow_type = crypto_stuff.decrypt_ope(
+                    token.flow_type, secret_password)
+                return AbsToken(token_type, line_num, position, depth, order, flow_type)
+
+            path_counter = 0
+            for path in vulnerable_paths:
                 path_counter += 1
+                print(f"\nVulnerable path {path_counter}:")
+                for token in path:
+                    print(
+                        "\t" + str(decrypt_token(token, secret_password)))
 
-            #             with open("encrypted_ds", "r", encoding="utf-8") as f:
-            #                 data = json.loads(f.read())
-            #                 print(data)
-            #                 decoded_ds = {}
-            #                 for k, v in data.items():
-            #                     decoded_key = crypto_stuff.decrypt_sse(
-            #                         base64.b64decode(base64.b64decode(k)), password)
-            #                     decoded_values = []
-            #                     for value in v:
-            #                         token_type = crypto_stuff.decrypt_sse(
-            #                             base64.b64decode(base64.b64decode(value["token_type"])), password)
-            #                         line_num = crypto_stuff.decrypt_sse(
-            #                             base64.b64decode(base64.b64decode(value["line_num"])), password)
-            #                         position = crypto_stuff.decrypt_ope(
-            #                             value["token_pos"], password)
-            #                         depth = crypto_stuff.decrypt_ope(
-            #                             value["depth"], password)
-            #                         order = crypto_stuff.decrypt_ope(
-            #                             value["order"], password)
-            #                         flow_type = crypto_stuff.decrypt_ope(
-            #                             value["flow_type"], password)
-            #                         decoded_values.append(
-            #                             AbsToken(token_type, line_num, position, depth, order, flow_type))
-            #                     decoded_ds[decoded_key] = decoded_values
-            #
-            #                 print("\n ------------- Decoded data structure ------------- \n")
-            #                 for k in decoded_ds:
-            #                     print(str(k))
-            #                     for v in decoded_ds[k]:
-            #                         print("\t" + str(v))
+
 if __name__ == "__main__":
     FILE = "/home/dani/tese/hollingworth_app/xss3.php"
     tokenize(FILE)

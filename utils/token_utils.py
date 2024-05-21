@@ -1,7 +1,7 @@
 """Abstract token class to represent tokens after abstraction and correlation."""
 
 import json
-import base64
+import utils.crypto_stuff as crypto_stuff
 
 
 class AbsToken:

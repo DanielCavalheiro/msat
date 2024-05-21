@@ -1,7 +1,7 @@
 """Module for the Detector component"""
 
-import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import EncToken
+import utils.crypto_stuff as crypto_stuff
 
 
 class Detector:
@@ -10,18 +10,9 @@ class Detector:
     def __init__(self, data_structure, shared_password):
         self.data_structure = data_structure
         self.shared_password = shared_password
-        self.special_tokens = self.__populate_special_tokens()
+        self.special_tokens = crypto_stuff.populate_special_tokens(
+            shared_password)
         self.vuln_type = None
-
-    def __populate_special_tokens(self):
-        """Populate the special tokens"""
-        return {
-            "INPUT": crypto_stuff.hmac_it("INPUT", self.shared_password),
-            "XSS_SENS": crypto_stuff.hmac_it("XSS_SENS", self.shared_password),
-            "XSS_SANF": crypto_stuff.hmac_it("XSS_SANF", self.shared_password),
-            "SQLI_SENS": crypto_stuff.hmac_it("SQLI_SENS", self.shared_password),
-            "SQLI_SANF": crypto_stuff.hmac_it("SQLI_SANF", self.shared_password),
-        }
 
     def set_vuln_type(self, vuln_type: str):
         """Sets the vulnerability type"""
@@ -43,6 +34,11 @@ class Detector:
             visited.append(token)
             self.__detect_flows(detected_paths, current_path, visited, token)
 
+        # Check if there are any detected paths
+        if not detected_paths:
+            # No detected paths no vulnerabilities
+            return []
+
         # Group paths by sink
         paths_by_sink = {}
         for path in detected_paths:
@@ -57,6 +53,9 @@ class Detector:
             possible_paths = []
             for path in paths:
                 previous_pos = None
+                if len(path) == 1:
+                    possible_paths.append(path)
+                    continue
                 for token in path:
                     if previous_pos is None:
                         previous_pos = token.token_pos
@@ -73,7 +72,7 @@ class Detector:
         for sink, paths in possible_paths_by_sink.items():
             best = None
             closest = None
-            for i in range(1, max(len(path) for path in paths)):
+            for i in range(0, max(len(path) for path in paths)):
                 for current_path in paths:
                     if i < len(current_path):
                         current_token = current_path[i]
@@ -90,7 +89,7 @@ class Detector:
         candidate_paths = relevant_paths.copy()
         for relevant_path in relevant_paths:
             for token in relevant_path:
-                if token.depth > 0:
+                if token.depth > relevant_path[0].depth:
                     for path in paths_by_sink[relevant_path[0]]:
                         if path in candidate_paths:
                             continue
