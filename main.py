@@ -83,5 +83,5 @@ def tokenize(file):
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss3.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss1.php"
     tokenize(FILE)

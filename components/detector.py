@@ -2,6 +2,7 @@
 
 from utils.token_utils import EncToken
 import utils.crypto_stuff as crypto_stuff
+import itertools
 
 
 class Detector:
@@ -101,17 +102,32 @@ class Detector:
                                     candidate_paths.append(path)
 
         # Check if path ends in Input or has a Sanitization fuction
-        result_paths = []
+        vulnerable_paths_by_sink = {}
+        not_vulnerable_paths_by_sink = {}
         for candidate_path in candidate_paths:
-            for token in candidate_path:
-                if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
-                    break
+            sink = candidate_path[0]
+            end_token = candidate_path[-1]
+            if end_token.token_type == self.special_tokens["INPUT"]:
+                vulnerable_paths = vulnerable_paths_by_sink.get(sink, [])
+                vulnerable_paths.append(candidate_path)
+                vulnerable_paths_by_sink[sink] = vulnerable_paths
+            else:
+                not_vulnerable_paths = not_vulnerable_paths_by_sink.get(sink, [
+                ])
+                not_vulnerable_paths.append(candidate_path)
+                not_vulnerable_paths_by_sink[sink] = not_vulnerable_paths
 
-                if token.token_type == self.special_tokens["INPUT"]:
-                    result_paths.append(candidate_path)
-                    break
+        for sink, paths in not_vulnerable_paths_by_sink.items():
+            sanitizers = []
+            for path in paths:
+                sanitizers.append(path[-1])
+            for path in vulnerable_paths_by_sink.get(sink, []):
+                end_token = path[-1]
+                for sanitizer in sanitizers:
+                    if sanitizer.depth == end_token.depth and sanitizer.order == end_token.order and sanitizer.flow_type == end_token.flow_type and sanitizer.token_pos > end_token.token_pos:
+                        vulnerable_paths_by_sink[sink].remove(path)
 
-        return result_paths
+        return list(itertools.chain.from_iterable(vulnerable_paths_by_sink.values()))
 
     def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
