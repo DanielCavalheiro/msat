@@ -65,8 +65,6 @@ class Detector:
                     previous_pos = token.token_pos
             possible_paths_by_sink[sink] = possible_paths
 
-        # TODO: what if there are no possible paths?
-
         # Get best matches
         relevant_paths = []
         for sink, paths in possible_paths_by_sink.items():
@@ -90,7 +88,7 @@ class Detector:
         for relevant_path in relevant_paths:
             for token in relevant_path:
                 if token.depth > relevant_path[0].depth:
-                    for path in paths_by_sink[relevant_path[0]]:
+                    for path in possible_paths_by_sink[relevant_path[0]]:
                         if path in candidate_paths:
                             continue
                         for current_token in path:

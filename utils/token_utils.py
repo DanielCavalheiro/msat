@@ -36,7 +36,7 @@ class EncTokenEncoder(json.JSONEncoder):
     """JSON encoder for EncToken class."""
 
     def default(self, o):
-        if isinstance(o, EncToken) or isinstance(o, AbsToken):  # TODO: remove or
+        if isinstance(o, EncToken):
             return o.__dict__
         return json.JSONEncoder.default(self, o)
 

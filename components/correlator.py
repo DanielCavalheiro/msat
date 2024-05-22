@@ -44,7 +44,7 @@ class Correlator:
                 # ----------------------- Handle assignment operations ----------------------- #
                 case "OP0":  # FIXME: This is a temporary solution is it good?
                     if self.last_token and "VAR" in self.last_token.token_type:
-                        self.__handle_assignment(self.last_token)
+                        self.__handle_correlation(self.last_token)
 
                 # --------------------------- Handle control flows --------------------------- #
                 case "IF":
@@ -67,7 +67,7 @@ class Correlator:
                     pass
                 # XSS
                 case "XSS_SENS":
-                    self.__handle_assignment(self.current_token)
+                    self.__handle_correlation(self.current_token)
                 case "XSS_SANF":
                     pass  # TODO handle SANF
                 # SQLI
@@ -85,7 +85,7 @@ class Correlator:
             return None
         return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type)
 
-    def __handle_assignment(self, assignee: AbsToken):
+    def __handle_correlation(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""
         assignee_name = assignee.token_type
         assignors = self.data_structure.get(assignee_name, [])
@@ -100,6 +100,11 @@ class Correlator:
                     self.current_token = self.__next_token()
 
             elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
                 assignors.append(self.current_token)
                 while (self.current_token and self.current_token.token_type != "RPAREN"):
                     self.current_token = self.__next_token()
