@@ -1,18 +1,22 @@
 """Module for the Detector component"""
 
+import itertools
 from utils.token_utils import EncToken
 import utils.crypto_stuff as crypto_stuff
-import itertools
 
 
 class Detector:
     """Detector component that detects vulnerabilities"""
 
-    def __init__(self, data_structure, shared_password):
+    def __init__(self, data_structure, shared_password, encrypt_flag):
         self.data_structure = data_structure
         self.shared_password = shared_password
-        self.special_tokens = crypto_stuff.populate_special_tokens(
-            shared_password)
+        if encrypt_flag:
+            self.special_tokens = crypto_stuff.populate_special_tokens(
+                shared_password)
+        else:
+            self.special_tokens = {"INPUT": "INPUT", "XSS_SENS": "XSS_SENS",
+                                   "XSS_SANF": "XSS_SANF", "SQLI_SENS": "SQLI_SENS", "SQLI_SANF": "SQLI_SANF"}
         self.vuln_type = None
 
     def set_vuln_type(self, vuln_type: str):
@@ -28,47 +32,53 @@ class Detector:
         if query not in self.data_structure:
             return []
 
-        detected_paths = []
+        detected_paths = {}
         for token in self.data_structure[query]:
+            detected_paths_by_sink = []
             current_path = []
             visited = []
             visited.append(token)
-            self.__detect_flows(detected_paths, current_path, visited, token)
+            previous_pos = None
+            self.__detect_flows(detected_paths_by_sink, current_path,
+                                visited, token, previous_pos)
+            detected_paths[token] = []
+            for path in detected_paths_by_sink:
+                detected_paths[token].append(path)
 
         # Check if there are any detected paths
         if not detected_paths:
             # No detected paths no vulnerabilities
             return []
 
-        # Group paths by sink
-        paths_by_sink = {}
-        for path in detected_paths:
-            sink = path[0]
-            if sink not in paths_by_sink:
-                paths_by_sink[sink] = []
-            paths_by_sink[sink].append(path)
+        # # Group paths by sink
+        # paths_by_sink = {}
+        # for path in detected_paths:
+        #     sink = path[0]
+        #     if sink not in paths_by_sink:
+        #         paths_by_sink[sink] = []
+        #     paths_by_sink[sink].append(path)
 
         # Remove impossible paths
-        possible_paths_by_sink = {}
-        for sink, paths in paths_by_sink.items():
-            possible_paths = []
-            for path in paths:
-                previous_pos = None
-                if len(path) == 1:
-                    possible_paths.append(path)
-                    continue
-                for token in path:
-                    if previous_pos is None:
-                        previous_pos = token.token_pos
-                    elif previous_pos > token.token_pos:
-                        possible_paths.append(path)
-                        break
-                    previous_pos = token.token_pos
-            possible_paths_by_sink[sink] = possible_paths
+        # possible_paths_by_sink = {}
+        # for sink, paths in paths_by_sink.items():
+        #     possible_paths = []
+        #     for path in paths:
+        #         previous_pos = None
+        #         if len(path) == 1:
+        #             possible_paths.append(path)
+        #             continue
+        #         for token in path:
+        #             if previous_pos is None:
+        #                 previous_pos = token.token_pos
+        #             elif previous_pos > token.token_pos:
+        #                 possible_paths.append(path)
+        #                 break
+        #             previous_pos = token.token_pos
+        #     possible_paths_by_sink[sink] = possible_paths
 
         # Get best matches
         relevant_paths = []
-        for sink, paths in possible_paths_by_sink.items():
+        for sink, paths in detected_paths.items():
             best = None
             closest = None
             for i in range(0, max(len(path) for path in paths)):
@@ -89,7 +99,7 @@ class Detector:
         for relevant_path in relevant_paths:
             for token in relevant_path:
                 if token.depth > relevant_path[0].depth:
-                    for path in possible_paths_by_sink[relevant_path[0]]:
+                    for path in detected_paths[relevant_path[0]]:
                         if path in candidate_paths:
                             continue
                         for current_token in path:
@@ -102,43 +112,40 @@ class Detector:
                                     candidate_paths.append(path)
 
         # Check if path ends in Input or has a Sanitization fuction
-        vulnerable_paths_by_sink = {}
-        not_vulnerable_paths_by_sink = {}
+        result_paths = []
         for candidate_path in candidate_paths:
-            sink = candidate_path[0]
-            end_token = candidate_path[-1]
-            if end_token.token_type == self.special_tokens["INPUT"]:
-                vulnerable_paths = vulnerable_paths_by_sink.get(sink, [])
-                vulnerable_paths.append(candidate_path)
-                vulnerable_paths_by_sink[sink] = vulnerable_paths
-            else:
-                not_vulnerable_paths = not_vulnerable_paths_by_sink.get(sink, [
-                ])
-                not_vulnerable_paths.append(candidate_path)
-                not_vulnerable_paths_by_sink[sink] = not_vulnerable_paths
+            for token in candidate_path:
+                if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
+                    break
 
-        for sink, paths in not_vulnerable_paths_by_sink.items():
-            sanitizers = []
-            for path in paths:
-                sanitizers.append(path[-1])
-            for path in vulnerable_paths_by_sink.get(sink, []):
-                end_token = path[-1]
-                for sanitizer in sanitizers:
-                    if sanitizer.depth == end_token.depth and sanitizer.order == end_token.order and sanitizer.flow_type == end_token.flow_type and sanitizer.token_pos > end_token.token_pos:
-                        vulnerable_paths_by_sink[sink].remove(path)
+                if token.token_type == self.special_tokens["INPUT"]:
+                    result_paths.append(candidate_path)
+                    break
 
-        return list(itertools.chain.from_iterable(vulnerable_paths_by_sink.values()))
+        return result_paths
 
-    def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken):
+    def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken, previous_pos):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
         if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.data_structure:
+            paths_to_remove = []
+            for path in detected_paths:
+                for i in range(0, min(len(path), len(current_path))):
+                    if path[i] != current_path[i]:
+                        if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type:
+                            if path[i].token_pos < current_path[i].token_pos:
+                                paths_to_remove.append(path)
+                            else:
+                                paths_to_remove.append(current_path)
             detected_paths.append(current_path.copy())
+            for path in paths_to_remove:
+                detected_paths.remove(path)
         else:
             for token in self.data_structure[current_token.token_type]:
-                if token not in visited:
+                if token not in visited and (not previous_pos or previous_pos > token.token_pos):
+                    previous_pos = current_token.token_pos
                     visited.append(token)
                     self.__detect_flows(
-                        detected_paths, current_path, visited, token)
+                        detected_paths, current_path, visited, token, previous_pos)
                     current_path.pop()
                     visited.remove(token)

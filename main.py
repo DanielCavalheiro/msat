@@ -19,6 +19,8 @@ def tokenize(file):
     else:
         with data:
 
+            encrypt_flag = False
+
             # -------------------------------- Client side ------------------------------- #
 
             lexer = Abstractor()
@@ -27,7 +29,7 @@ def tokenize(file):
             correlator = Correlator(lexer, {}, 0, 0)
             correlator.correlate()
 
-            encryptor = Encryptor()
+            encryptor = Encryptor(encrypt_flag)
 
             # Password known only by the client
             secret_password = crypto_stuff.generate_key("secret_password")
@@ -45,7 +47,7 @@ def tokenize(file):
                 encrypted_ds = json.loads(
                     f.read(), object_hook=enc_token_decoder)
 
-            detector = Detector(encrypted_ds, shared_password)
+            detector = Detector(encrypted_ds, shared_password, encrypt_flag)
             detector.set_vuln_type("XSS")
             vulnerable_paths = detector.detect_vulnerability()
 
@@ -78,10 +80,13 @@ def tokenize(file):
                 path_counter += 1
                 print(f"\nVulnerable path {path_counter}:")
                 for token in path:
-                    print(
-                        "\t" + str(decrypt_token(token, secret_password)))
+                    if (encrypt_flag):
+                        print(
+                            "\t" + str(decrypt_token(token, secret_password)))
+                    else:
+                        print("\t" + str(token))
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss1.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss3.php"
     tokenize(FILE)

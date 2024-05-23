@@ -10,8 +10,8 @@ import utils.crypto_stuff as crypto_stuff
 class Encryptor:
     """Encryptor component to encrypt data strcutur."""
 
-    def __init__(self):
-        pass
+    def __init__(self, encrypt_flag):
+        self.encrypt_flag = encrypt_flag  # Flag to encrypt or not
 
     def encrypt_data_structure(self, data_structure: dict, secret_password, shared_password):
         """Encrypt the data structure with the given password."""
@@ -28,8 +28,12 @@ class Encryptor:
                     self.__encrypt_token(value, secret_password, shared_password))
             encrypted_ds[enc_key] = enc_assignors
 
-        with open("encrypted_ds", "w", encoding="utf-8") as f:
-            json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
+        if self.encrypt_flag:
+            with open("encrypted_ds", "w", encoding="utf-8") as f:
+                json.dump(encrypted_ds, f, cls=EncTokenEncoder, indent=4)
+        else:
+            with open("encrypted_ds", "w", encoding="utf-8") as f:
+                json.dump(data_structure, f, cls=EncTokenEncoder, indent=4)
 
     def __encrypt_token(self, token: AbsToken, secret_password, shared_password):
         """Encrypt the token with the given password."""
