@@ -1,6 +1,5 @@
 """Module for the Detector component"""
 
-import itertools
 from utils.token_utils import EncToken
 import utils.crypto_stuff as crypto_stuff
 

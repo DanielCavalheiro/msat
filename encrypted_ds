@@ -1,53 +1,61 @@
 {
-    "VAR1": [
-        {
-            "token_type": "INPUT",
-            "line_num": 2,
-            "token_pos": 11,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
+    "VAR5": [
         {
             "token_type": "ENCAPSED_AND_WHITESPACE",
-            "line_num": 3,
-            "token_pos": 36,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
-        {
-            "token_type": "INPUT",
-            "line_num": 6,
-            "token_pos": 80,
-            "depth": 1,
-            "order": 1,
-            "flow_type": 1
-        },
-        {
-            "token_type": "INPUT",
-            "line_num": 10,
-            "token_pos": 116,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        }
-    ],
-    "VAR2": [
-        {
-            "token_type": "CONSTANT_ENCAPSED_STRING",
             "line_num": 4,
-            "token_pos": 51,
+            "token_pos": 90,
+            "depth": 0,
+            "order": 0,
+            "flow_type": 0
+        },
+        {
+            "token_type": "INPUT",
+            "line_num": 5,
+            "token_pos": 103,
+            "depth": 0,
+            "order": 0,
+            "flow_type": 0
+        },
+        {
+            "token_type": "SQLI_SANF",
+            "line_num": 6,
+            "token_pos": 124,
             "depth": 0,
             "order": 0,
             "flow_type": 0
         }
     ],
-    "XSS_SENS": [
+    "SQLI_SENS": [
+        {
+            "token_type": "LPAREN",
+            "line_num": 7,
+            "token_pos": 179,
+            "depth": 0,
+            "order": 0,
+            "flow_type": 0
+        },
         {
             "token_type": "VAR1",
-            "line_num": 8,
-            "token_pos": 106,
+            "line_num": 7,
+            "token_pos": 180,
+            "depth": 0,
+            "order": 0,
+            "flow_type": 0
+        },
+        {
+            "token_type": "VAR5",
+            "line_num": 7,
+            "token_pos": 187,
+            "depth": 0,
+            "order": 0,
+            "flow_type": 0
+        }
+    ],
+    "VAR6": [
+        {
+            "token_type": "SQLI_SENS",
+            "line_num": 7,
+            "token_pos": 167,
             "depth": 0,
             "order": 0,
             "flow_type": 0

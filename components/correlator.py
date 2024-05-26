@@ -69,10 +69,10 @@ class Correlator:
                 case "XSS_SENS":
                     self.__handle_correlation(self.current_token)
                 case "XSS_SANF":
-                    pass  # TODO handle SANF
+                    pass  # TODO: mysqli_stmt_bind_param
                 # SQLI
                 case "SQLI_SENS":
-                    pass
+                    self.__handle_sqli_sens()
                 case "SQLI_SANF":
                     pass
 
@@ -84,6 +84,14 @@ class Correlator:
         if not t:
             return None
         return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type)
+
+    def __correlate_next_depth(self, order: int, flow_type: int):
+        if not self.next_depth_correlator:
+            self.next_depth_correlator = Correlator(
+                self.abstractor, self.data_structure, self.depth + 1, flow_type)
+        self.next_depth_correlator.update(
+            order, flow_type, self.current_token, self.last_token)
+        self.next_depth_correlator.correlate()
 
     def __handle_correlation(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""
@@ -109,15 +117,22 @@ class Correlator:
                 while (self.current_token and self.current_token.token_type != "RPAREN"):
                     self.current_token = self.__next_token()
 
+            elif "SQLI_SENS" == self.current_token.token_type:
+                assignors.append(self.current_token)
+                self.__handle_sqli_sens()
+
             self.current_token = self.__next_token()
 
         if assignors:
             self.data_structure[assignee_name] = assignors
 
-    def __correlate_next_depth(self, order: int, flow_type: int):
-        if not self.next_depth_correlator:
-            self.next_depth_correlator = Correlator(
-                self.abstractor, self.data_structure, self.depth + 1, flow_type)
-        self.next_depth_correlator.update(
-            order, flow_type, self.current_token, self.last_token)
-        self.next_depth_correlator.correlate()
+    def __handle_sqli_sens(self):
+        """Handle SQL Injection sensitive operations."""
+        sql_sens = self.data_structure.get("SQLI_SENS", [])
+
+        self.current_token = self.__next_token()
+        while self.current_token and self.current_token.token_type != "RPAREN":
+            sql_sens.append(self.current_token)
+            self.current_token = self.__next_token()
+
+        self.data_structure["SQLI_SENS"] = sql_sens

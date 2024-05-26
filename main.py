@@ -48,7 +48,7 @@ def tokenize(file):
                     f.read(), object_hook=enc_token_decoder)
 
             detector = Detector(encrypted_ds, shared_password, encrypt_flag)
-            detector.set_vuln_type("XSS")
+            detector.set_vuln_type("SQLI")
             vulnerable_paths = detector.detect_vulnerability()
 
             # ------------------------------- Decode Result (Client Side) ------------------------------ #
@@ -88,5 +88,5 @@ def tokenize(file):
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss3.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss4.php"
     tokenize(FILE)
