@@ -1,64 +1,24 @@
 {
-    "VAR5": [
+    "cG90cTNoc21nU05QaXZiMWpQNzk0K2pJMUdFPQ==": [
         {
-            "token_type": "ENCAPSED_AND_WHITESPACE",
-            "line_num": 4,
-            "token_pos": 90,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
-        {
-            "token_type": "INPUT",
-            "line_num": 5,
-            "token_pos": 103,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
-        {
-            "token_type": "SQLI_SANF",
-            "line_num": 6,
-            "token_pos": 124,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
+            "token_type": "TUROaFpqRXdOV001TnpjNU9XWTVZamN4TjJJME9XSXdZVGRtWlRkaFl6bGlZVFkxWXpNeE13PT0=",
+            "line_num": "NnlQd2tSZFJyNjJYZmhqd2thZlZ1ZUU9",
+            "token_pos": 638258,
+            "depth": 25601,
+            "order": 25601,
+            "flow_type": 25601,
+            "scope": "UzkySnJRMGt1ZlFZZHJtdHM2OVYyTzg9"
         }
     ],
-    "SQLI_SENS": [
+    "WVdSak1EQmtORFl4T1dJelpXTTBNR0poWWpJNU5qRTBPVFUxTVRZM05EUmlOemsyWkdaa05nPT0=": [
         {
-            "token_type": "LPAREN",
-            "line_num": 7,
-            "token_pos": 179,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
-        {
-            "token_type": "VAR1",
-            "line_num": 7,
-            "token_pos": 180,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        },
-        {
-            "token_type": "VAR5",
-            "line_num": 7,
-            "token_pos": 187,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
-        }
-    ],
-    "VAR6": [
-        {
-            "token_type": "SQLI_SENS",
-            "line_num": 7,
-            "token_pos": 167,
-            "depth": 0,
-            "order": 0,
-            "flow_type": 0
+            "token_type": "cG90cTNoc21nU05QaXZiMWpQNzk0K2pJMUdFPQ==",
+            "line_num": "dzhxaEtqVklZc0EwWElXNFVFekQ1Qnps",
+            "token_pos": 4797190,
+            "depth": 25601,
+            "order": 25601,
+            "flow_type": 25601,
+            "scope": "UzkySnJRMGt1ZlFZZHJtdHM2OVYyTzg9"
         }
     ]
 }

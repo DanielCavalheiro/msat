@@ -13,11 +13,13 @@ class Abstractor:
         self.lexer = lex(module=token_rules)
         self.last_token = None
 
-        # Abstracting variables/operations
+        # Abstracting variables/operations/functions
         self.var_abstractor = {}
         self.var_count = 0
         self.op_abstractor = {}
         self.op_count = 0
+        self.func_abstractor = {}
+        self.func_count = 0
 
         # Auxiliary variables for code context
         self.in_parens = False
@@ -197,18 +199,18 @@ class Abstractor:
                 self.code_block.append([False, 0, ""])
                 self.in_func_decl = True
 
-            case "STRING":
+            case "STRING":  # TODO: What if function call with in function call
+                func_id = self.__get_func_id(t.value)
                 if self.in_func_decl:
-                    func_id = str(hash(t.value))
                     self.code_block[-1][2] = func_id
-                    t.type = "FUNC:" + func_id
+                    t.type = func_id
                     self.__skip_until("LPAREN")
                     self.in_parens = True
                     self.in_func_decl = False
                 else:
                     next_token = self.peek()
                     if next_token and next_token.type == "LPAREN":
-                        t.type = "FUNC_CALL:" + str(hash(t.value))
+                        t.type = "FUNC_CALL:" + func_id
                         self.peeked_token = None
                         self.in_parens = True
             case "INPUT":
@@ -245,3 +247,12 @@ class Abstractor:
         while t and t.type != token_type:
             t = self.next_lexer_token()
         return t
+
+    def __get_func_id(self, func_name):
+        """Get the function id for the given function name."""
+        if func_name in self.func_abstractor:
+            return self.func_abstractor[func_name]
+        else:
+            self.func_count += 1
+            self.func_abstractor[func_name] = f"FUNC{self.func_count}"
+            return f"FUNC{self.func_count}"

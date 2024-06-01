@@ -50,4 +50,5 @@ class Encryptor:
         depth = crypto_stuff.encrypt_ope(token.depth, secret_password)
         order = crypto_stuff.encrypt_ope(token.order, secret_password)
         flow_type = crypto_stuff.encrypt_ope(token.flow_type, secret_password)
-        return EncToken(token_type, line_num, position, depth, order, flow_type)
+        scope = crypto_stuff.encrypt_sse(str(token.scope), secret_password)
+        return EncToken(token_type, line_num, position, depth, order, flow_type, scope)

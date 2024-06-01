@@ -7,16 +7,18 @@ from utils.token_utils import AbsToken
 class Correlator:
     """Correlator component class to correlate abstracted tokens."""
 
-    def __init__(self, abstractor: Abstractor, data_structure, depth, flow_type):
-        self.abstractor = abstractor
-        self.data_structure = data_structure
-        self.depth = depth
-        self.order = 0
-        self.control_flow_counter = 0
-        self.flow_type = flow_type
-        self.current_token = None
-        self.last_token = None
-        self.next_depth_correlator = None
+    def __init__(self, abstractor: Abstractor, data_structure, depth, flow_type, scope, scope_by_name):
+        self.abstractor = abstractor            # Abstractor instance
+        self.data_structure = data_structure    # Data structure to store correlations
+        self.depth = depth                      # Depth of the current tokens
+        self.order = 0                          # Order of the current token
+        self.control_flow_counter = 0           # Counter for control flows to keep orders
+        self.flow_type = flow_type              # Type of the current flow
+        self.current_token = None               # Current token
+        self.last_token = None                  # Last token
+        self.next_depth_correlator = None       # Next depth correlator
+        self.scope = scope                      # Scope of the current tokens
+        self.scope_by_name = scope_by_name      # Scope by name of func or file
 
     def update(self, order, flow_type, current_token, last_token):
         """Update the correlator with new order and flow type."""
@@ -32,7 +34,7 @@ class Correlator:
         while True:  # Iterate over the tokens
 
             if self.last_token and self.last_token.token_type == "END_CF":
-                # This could happend if the last control flow was a onliner
+                # Leave the current depth if the last token was the end of a control flow
                 break
 
             self.current_token = self.__next_token()  # Next token to correalate
@@ -62,6 +64,14 @@ class Correlator:
                     self.control_flow_counter += 1
                     self.__correlate_next_depth(self.control_flow_counter, 1)
 
+                # ----------------------------- Handle functions ----------------------------- #
+
+                case "FUNCTION":
+                    self.current_token = self.__next_token()
+
+                case "FUNC_CALL":
+                    pass
+
                 # ---------------------- Handle possible vulnerabilities --------------------- #
                 case "INPUT":
                     pass
@@ -83,15 +93,19 @@ class Correlator:
         t = self.abstractor.token()
         if not t:
             return None
-        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type)
+        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type, self.scope)
 
     def __correlate_next_depth(self, order: int, flow_type: int):
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(
-                self.abstractor, self.data_structure, self.depth + 1, flow_type)
+                self.abstractor, self.data_structure, self.depth + 1, flow_type, self.scope, self.scope_by_name)
         self.next_depth_correlator.update(
             order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
+
+    def __correlate_function(self):
+        """Correlate the function tokens."""
+        pass
 
     def __handle_correlation(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""
@@ -136,3 +150,7 @@ class Correlator:
             self.current_token = self.__next_token()
 
         self.data_structure["SQLI_SENS"] = sql_sens
+
+    def __get_scope(self, token: AbsToken):
+        """Get the scope of the current token if exists."""
+        pass

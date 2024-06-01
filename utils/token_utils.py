@@ -6,16 +6,17 @@ import json
 class AbsToken:
     """Abstract token class to represent tokens after abstraction and correlation."""
 
-    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type):
+    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope):
         self.token_type = token_type
         self.line_num = line_num
         self.token_pos = lexpos
         self.depth = depth
         self.order = order
         self.flow_type = flow_type
+        self.scope = scope
 
     def __str__(self):
-        return f"AbsToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type})"
+        return f"AbsToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope})"
 
     def __eq__(self, value: object) -> bool:
         return self.__str__() == value.__str__()
@@ -28,7 +29,7 @@ class EncToken(AbsToken):
     """Encrypted token class to represent tokens after encryption."""
 
     def __str__(self):
-        return f"{self.token_type}${self.line_num}${self.token_pos}${self.depth}${self.order}${self.flow_type}"
+        return f"{self.token_type}${self.line_num}${self.token_pos}${self.depth}${self.order}${self.flow_type}${self.scope}"
 
 
 class EncTokenEncoder(json.JSONEncoder):
@@ -43,5 +44,5 @@ class EncTokenEncoder(json.JSONEncoder):
 def enc_token_decoder(dct):
     """JSON decoder for EncToken class."""
     if "token_type" in dct:
-        return EncToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"])
+        return EncToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
     return dct

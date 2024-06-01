@@ -19,14 +19,15 @@ def tokenize(file):
     else:
         with data:
 
-            encrypt_flag = False
+            encrypt_flag = True
+            detecting = "XSS"
 
             # -------------------------------- Client side ------------------------------- #
 
             lexer = Abstractor()
             lexer.input(data.read())
 
-            correlator = Correlator(lexer, {}, 0, 0)
+            correlator = Correlator(lexer, {}, 0, 0, 0, {})
             correlator.correlate()
 
             encryptor = Encryptor(encrypt_flag)
@@ -48,7 +49,7 @@ def tokenize(file):
                     f.read(), object_hook=enc_token_decoder)
 
             detector = Detector(encrypted_ds, shared_password, encrypt_flag)
-            detector.set_vuln_type("SQLI")
+            detector.set_vuln_type(detecting)
             vulnerable_paths = detector.detect_vulnerability()
 
             # ------------------------------- Decode Result (Client Side) ------------------------------ #
@@ -73,7 +74,9 @@ def tokenize(file):
                     token.order, secret_password)
                 flow_type = crypto_stuff.decrypt_ope(
                     token.flow_type, secret_password)
-                return AbsToken(token_type, line_num, position, depth, order, flow_type)
+                scope = crypto_stuff.decrypt_sse(base64.b64decode(
+                    base64.b64decode(token.scope)), secret_password)
+                return AbsToken(token_type, line_num, position, depth, order, flow_type, scope)
 
             path_counter = 0
             for path in vulnerable_paths:
