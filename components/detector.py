@@ -49,32 +49,6 @@ class Detector:
             # No detected paths no vulnerabilities
             return []
 
-        # # Group paths by sink
-        # paths_by_sink = {}
-        # for path in detected_paths:
-        #     sink = path[0]
-        #     if sink not in paths_by_sink:
-        #         paths_by_sink[sink] = []
-        #     paths_by_sink[sink].append(path)
-
-        # Remove impossible paths
-        # possible_paths_by_sink = {}
-        # for sink, paths in paths_by_sink.items():
-        #     possible_paths = []
-        #     for path in paths:
-        #         previous_pos = None
-        #         if len(path) == 1:
-        #             possible_paths.append(path)
-        #             continue
-        #         for token in path:
-        #             if previous_pos is None:
-        #                 previous_pos = token.token_pos
-        #             elif previous_pos > token.token_pos:
-        #                 possible_paths.append(path)
-        #                 break
-        #             previous_pos = token.token_pos
-        #     possible_paths_by_sink[sink] = possible_paths
-
         # Get best matches
         relevant_paths = []
         for sink, paths in detected_paths.items():
@@ -116,7 +90,6 @@ class Detector:
             for token in candidate_path:
                 if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
                     break
-
                 if token.token_type == self.special_tokens["INPUT"]:
                     result_paths.append(candidate_path)
                     break

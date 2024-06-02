@@ -24,7 +24,8 @@ else:
         lexer = Abstractor()
         lexer.input(data.read())
 
-        correlator = Correlator(lexer, {}, 0, 0, 0, {})
+        scope = os.path.basename(FILE)
+        correlator = Correlator(lexer, {}, 0, 0, scope, {})
         correlator.correlate()
 
         encryptor = Encryptor(ENCRYPT_FLAG)

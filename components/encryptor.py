@@ -1,7 +1,6 @@
 """Module for the Encryptor component"""
 
 import json
-import yaml
 from utils.token_utils import AbsToken, EncTokenEncoder
 from utils.token_utils import EncToken
 import utils.crypto_stuff as crypto_stuff
@@ -16,17 +15,19 @@ class Encryptor:
     def encrypt_data_structure(self, data_structure: dict, secret_password, shared_password):
         """Encrypt the data structure with the given password."""
         encrypted_ds = {}  # Encrypted data structure
-        for key in data_structure:
-            if key in ("INPUT", "XSS_SENS", "XSS_SANF", "SQLI_SENS", "SQLI_SANF"):
-                enc_key = crypto_stuff.hmac_it(key, shared_password)
-            else:
-                enc_key = crypto_stuff.encrypt_sse(key, secret_password)
-            values = data_structure[key]
-            enc_assignors = []
-            for value in values:
-                enc_assignors.append(
-                    self.__encrypt_token(value, secret_password, shared_password))
-            encrypted_ds[enc_key] = enc_assignors
+        for scope, values in data_structure.items():
+            enc_scope = crypto_stuff.encrypt_sse(scope, secret_password)
+            encrypted_ds[enc_scope] = {}
+            for key, vs in values.items():
+                if key in ("INPUT", "XSS_SENS", "XSS_SANF", "SQLI_SENS", "SQLI_SANF"):
+                    enc_key = crypto_stuff.hmac_it(key, shared_password)
+                else:
+                    enc_key = crypto_stuff.encrypt_sse(key, secret_password)
+                enc_assignors = []
+                for value in vs:
+                    enc_assignors.append(
+                        self.__encrypt_token(value, secret_password, shared_password))
+                encrypted_ds[enc_scope][enc_key] = enc_assignors
 
         if self.encrypt_flag:
             with open("encrypted_ds", "w", encoding="utf-8") as f:
@@ -50,5 +51,5 @@ class Encryptor:
         depth = crypto_stuff.encrypt_ope(token.depth, secret_password)
         order = crypto_stuff.encrypt_ope(token.order, secret_password)
         flow_type = crypto_stuff.encrypt_ope(token.flow_type, secret_password)
-        scope = crypto_stuff.encrypt_sse(str(token.scope), secret_password)
+        scope = crypto_stuff.encrypt_sse(token.scope, secret_password)
         return EncToken(token_type, line_num, position, depth, order, flow_type, scope)

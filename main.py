@@ -9,6 +9,7 @@ from components.detector import Detector
 from components.encryptor import Encryptor
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, EncToken, enc_token_decoder
+import os
 
 
 def tokenize(file):
@@ -27,7 +28,8 @@ def tokenize(file):
             lexer = Abstractor()
             lexer.input(data.read())
 
-            correlator = Correlator(lexer, {}, 0, 0, 0, {})
+            scope = os.path.basename(file)
+            correlator = Correlator(lexer, {}, 0, 0, scope, {})
             correlator.correlate()
 
             encryptor = Encryptor(encrypt_flag)
