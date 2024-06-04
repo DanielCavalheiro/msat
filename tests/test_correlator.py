@@ -17,7 +17,7 @@ else:
 
         lexer = Abstractor()
         lexer.input(data.read())
-       
+
         scope = os.path.basename(FILE)
         correlator = Correlator(lexer, {}, 0, 0, scope, {})
         correlator.correlate()

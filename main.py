@@ -8,7 +8,7 @@ from components.correlator import Correlator
 from components.detector import Detector
 from components.encryptor import Encryptor
 import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken, EncToken, enc_token_decoder
+from utils.token_utils import AbsToken, EncToken, token_decoder
 import os
 
 
@@ -48,7 +48,7 @@ def tokenize(file):
             encrypted_ds = {}
             with open("encrypted_ds", "r", encoding="utf-8") as f:
                 encrypted_ds = json.loads(
-                    f.read(), object_hook=enc_token_decoder)
+                    f.read(), object_hook=token_decoder)
 
             detector = Detector(encrypted_ds, shared_password, encrypt_flag)
             detector.set_vuln_type(detecting)

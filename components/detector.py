@@ -1,6 +1,6 @@
 """Module for the Detector component"""
 
-from utils.token_utils import EncToken
+from utils.token_utils import AbsToken
 import utils.crypto_stuff as crypto_stuff
 
 
@@ -96,7 +96,7 @@ class Detector:
 
         return result_paths
 
-    def __detect_flows(self, detected_paths, current_path, visited, current_token: EncToken, previous_pos):
+    def __detect_flows(self, detected_paths, current_path, visited, current_token, previous_pos):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
         if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.data_structure:

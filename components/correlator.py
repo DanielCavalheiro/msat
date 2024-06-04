@@ -1,7 +1,8 @@
 """Module for the Correlator component"""
 
 from components.abstractor import Abstractor
-from utils.token_utils import AbsToken
+from utils.token_utils import AbsToken, FuncCallToken
+from utils.scope_details import ScopeDetails
 
 
 class Correlator:
@@ -17,11 +18,18 @@ class Correlator:
         self.current_token = None
         self.last_token = None
         self.next_depth_correlator = None
+
         self.current_scope = current_scope
         if current_scope not in self.data_structure:
             self.data_structure[current_scope] = {}
         self.scopes = scopes
-        self.awating_func_call = []
+        if current_scope not in self.scopes:
+            self.scopes[current_scope] = ScopeDetails([], [])
+        for argument in self.scopes[current_scope].arguments:
+            self.data_structure[self.current_scope][argument.token_type] = []
+
+        self.awating_func_call = {}
+        self.awating_func_return = {}
 
     def update(self, order, flow_type, current_token, last_token):
         """Update the correlator with new order and flow type."""
@@ -72,35 +80,27 @@ class Correlator:
 
             # ----------------------------- Handle functions ----------------------------- #
             elif token_type == "FUNCTION":
-                self.current_token = self.__next_token()
-                scope_name = self.current_token.token_type
-                self.scopes[scope_name] = []
-                self.current_token = self.__next_token()
-
-                while self.current_token and self.current_token.token_type != "END_PARENS":
-                    self.current_token.scope = scope_name
-                    if "VAR" in self.current_token.token_type:
-                        self.scopes[scope_name].append(self.current_token)
-                    self.current_token = self.__next_token()
-
-                func_correlator = Correlator(
-                    self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes
-                )
-                func_correlator.correlate()
+                self.__handle_func_defenition()
 
             elif "FUNC_CALL" in token_type:
-                func_name = self.last_token.token_type.split(":", 1)[1]
+                func_name = self.current_token.token_type.split(":", 1)[1]
                 if func_name in self.scopes:
-                    for argument in self.scopes[func_name]:
-                        assignee_name = argument.token_type
-                        assignors = self.data_structure[self.current_scope].get(
-                            assignee_name, []
-                        )
-                        if assignors:
-                            self.data_structure[self.current_scope][assignee_name] = assignors
-                else:
-                    self.awating_func_call.append(func_name)
-                    # TODO
+                    arguments = self.__handle_func_call(func_name)
+                    func_calls = self.data_structure[self.current_scope].get(
+                        "FUNC_CALL", [])
+                    func_calls.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                      self.order, self.flow_type, self.current_scope, func_name, arguments, self.scopes[func_name].return_values))
+                    self.data_structure[self.current_scope]["FUNC_CALL"] = func_calls
+                    self.current_token = self.__next_token()  # Skip the RPAREN
+                else:  # TODO: Handle function calls that are not defined
+                    arguments = []
+                    self.current_token = self.__next_token()
+                    while self.current_token and self.current_token.token_type != "RPAREN":
+                        arguments.append(self.current_token)
+                        self.current_token = self.__next_token()
+
+            elif token_type == "RETURN":
+                self.__handle_func_return()
 
             # ---------------------- Handle possible vulnerabilities --------------------- #
             elif token_type == "INPUT":
@@ -140,36 +140,119 @@ class Correlator:
             assignee_name, [])
 
         while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
-            self.__append_assignor(assignors)
+
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                assignors.append(self.current_token)
+
+            elif ("FUNC_CALL" in self.current_token.token_type):  # TODO - Handle function
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                if func_name in self.scopes:
+                    arguments = self.__handle_func_call(func_name)
+                    assignors.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, self.current_scope, func_name, arguments, self.scopes[func_name].return_values))
+
+            elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "SQLI_SENS" == self.current_token.token_type:
+                assignors.append(self.current_token)
+                self.__handle_sqli_sens()
+
             self.current_token = self.__next_token()
 
         if assignors:
             self.data_structure[self.current_scope][assignee_name] = assignors
 
-    def __append_assignor(self, assignors: list):
-        """Append assignors to the addignors list."""
-        if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
-            assignors.append(self.current_token)
+    def __handle_func_defenition(self):
+        self.current_token = self.__next_token()
+        scope_name = self.current_token.token_type
+        self.scopes[scope_name] = ScopeDetails([], [])
+        self.current_token = self.__next_token()
 
-        elif ("FUNC_CALL" in self.current_token.token_type):  # TODO - Handle function
-            while (self.current_token and self.current_token.token_type != "END_PARENS"):
-                self.current_token = self.__next_token()
+        while self.current_token and self.current_token.token_type != "END_PARENS":
+            self.current_token.scope = scope_name
+            if "VAR" in self.current_token.token_type:
+                self.scopes[scope_name].arguments.append(
+                    self.current_token)
+            self.current_token = self.__next_token()
 
-        elif self.current_token.token_type == "INPUT":
-            assignors.append(self.current_token)
-            while (self.current_token and self.current_token.token_type != "RPAREN"):
-                self.current_token = self.__next_token()
+        func_correlator = Correlator(
+            self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
+        func_correlator.correlate()
 
-        elif "_SANF" in self.current_token.token_type:
-            assignors.append(self.current_token)
-            while (self.current_token and self.current_token.token_type != "RPAREN"):
-                self.current_token = self.__next_token()
+    def __handle_func_return(self):
+        """Handle function returns."""
+        self.current_token = self.__next_token()
+        func_details = self.scopes[self.current_scope]
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
-        elif "SQLI_SENS" == self.current_token.token_type:
-            assignors.append(self.current_token)
-            self.__handle_sqli_sens()
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                func_details.return_values.append(self.current_token)
 
-        return assignors
+            elif ("FUNC_CALL" in self.current_token.token_type):  # TODO - Handle function
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                self.__handle_func_call(func_name)
+
+            elif self.current_token.token_type == "INPUT":
+                func_details.return_values.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
+                func_details.return_values.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "SQLI_SENS" == self.current_token.token_type:
+                func_details.return_values.append(self.current_token)
+                self.__handle_sqli_sens()
+
+            self.current_token = self.__next_token()
+
+        scope_returns = self.data_structure[self.current_scope].get(
+            "RETURN", [])
+        for return_value in func_details.return_values:
+            scope_returns.append(return_value)
+
+        self.data_structure[self.current_scope]["RETURN"] = scope_returns
+
+    def __handle_func_call(self, func_name):
+        """Handle function calls."""
+        self.current_token = self.__next_token()
+        arguments = []
+        # FIXME: multiple tokens could come for the same argument :(
+        for argument in self.scopes[func_name].arguments:
+
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                arguments.append(self.current_token)
+
+            elif ("FUNC_CALL" in self.current_token.token_type):
+                # TODO - Function call within a function call
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+
+            elif self.current_token.token_type == "INPUT":
+                arguments.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
+                arguments.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "SQLI_SENS" == self.current_token.token_type:
+                arguments.append(self.current_token)
+                self.__handle_sqli_sens()
+
+            return arguments
 
     def __handle_sqli_sens(self):
         """Handle SQL Injection sensitive operations."""

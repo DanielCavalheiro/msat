@@ -25,24 +25,32 @@ class AbsToken:
         return hash(self.__str__())
 
 
-class EncToken(AbsToken):
-    """Encrypted token class to represent tokens after encryption."""
+class FuncCallToken(AbsToken):
+    """Token to represent function call"""
+
+    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, func_name, arguments, return_values, ):
+        super().__init__(token_type, line_num, lexpos, depth, order, flow_type, scope)
+        self.func_name = func_name
+        self.arguments = arguments
+        self.return_values = return_values
 
     def __str__(self):
-        return f"{self.token_type}${self.line_num}${self.token_pos}${self.depth}${self.order}${self.flow_type}${self.scope}"
+        return f"FuncCallToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)}, {str(self.return_values)})"
 
 
-class EncTokenEncoder(json.JSONEncoder):
+class TokenEncoder(json.JSONEncoder):
     """JSON encoder for EncToken class."""
 
     def default(self, o):
-        if isinstance(o, EncToken) or isinstance(o, AbsToken):
+        if isinstance(o, AbsToken) or isinstance(o, FuncCallToken):
             return o.__dict__
         return json.JSONEncoder.default(self, o)
 
 
-def enc_token_decoder(dct):
+def token_decoder(dct):
     """JSON decoder for EncToken class."""
+    if "func_name" in dct:
+        return FuncCallToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"], dct["return_values"])
     if "token_type" in dct:
-        return EncToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
+        return AbsToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
     return dct

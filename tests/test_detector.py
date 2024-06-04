@@ -6,13 +6,12 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.token_utils import AbsToken, EncToken, enc_token_decoder
-import utils.crypto_stuff as crypto_stuff
-from components.detector import Detector
-from components.encryptor import Encryptor
-from components.abstractor import Abstractor
 from components.correlator import Correlator
-
+from components.abstractor import Abstractor
+from components.encryptor import Encryptor
+from components.detector import Detector
+import utils.crypto_stuff as crypto_stuff
+from utils.token_utils import AbsToken, token_decoder
 
 FILE = "/home/dani/tese/hollingworth_app/xss4.php"
 ENCRYPT_FLAG = True
@@ -41,7 +40,7 @@ else:
         encrypted_ds = {}
         with open("encrypted_ds", "r", encoding="utf-8") as f:
             encrypted_ds = json.loads(
-                f.read(), object_hook=enc_token_decoder)
+                f.read(), object_hook=token_decoder)
         detector = Detector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
         detector.set_vuln_type(DETECTING)
         vulnerable_paths = detector.detect_vulnerability()
@@ -49,7 +48,7 @@ else:
         special_tokens = crypto_stuff.populate_special_tokens(
             SHARED_PASSWORD)  # TODO change location
 
-        def decrypt_token(token: EncToken, secret_password):
+        def decrypt_token(token, secret_password):
             """Decrypts an encrypted token."""
             if token.token_type == special_tokens["INPUT"]:
                 token_type = token.token_type

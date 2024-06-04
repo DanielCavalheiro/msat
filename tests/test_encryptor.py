@@ -4,14 +4,13 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from components.correlator import Correlator
-from components.abstractor import Abstractor
-from components.encryptor import Encryptor
 import utils.crypto_stuff as crypto_stuff
-
+from components.encryptor import Encryptor
+from components.abstractor import Abstractor
+from components.correlator import Correlator
 
 FILE = "/home/dani/tese/hollingworth_app/xss4.php"
-ENCRYPT_FLAG = True
+ENCRYPT_FLAG = False
 
 
 try:
