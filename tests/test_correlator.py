@@ -14,8 +14,8 @@ except FileNotFoundError:
     print("File not found")
 else:
     with data:
-
-        lexer = Abstractor()
+        scope = os.path.basename(FILE)
+        lexer = Abstractor(scope)
         lexer.input(data.read())
 
         scope = os.path.basename(FILE)

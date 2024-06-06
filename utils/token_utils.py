@@ -28,14 +28,13 @@ class AbsToken:
 class FuncCallToken(AbsToken):
     """Token to represent function call"""
 
-    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, func_name, arguments, return_values, ):
+    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, func_name, arguments):
         super().__init__(token_type, line_num, lexpos, depth, order, flow_type, scope)
         self.func_name = func_name
         self.arguments = arguments
-        self.return_values = return_values
 
     def __str__(self):
-        return f"FuncCallToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)}, {str(self.return_values)})"
+        return f"FuncCallToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)})"
 
 
 class TokenEncoder(json.JSONEncoder):
@@ -50,7 +49,7 @@ class TokenEncoder(json.JSONEncoder):
 def token_decoder(dct):
     """JSON decoder for EncToken class."""
     if "func_name" in dct:
-        return FuncCallToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"], dct["return_values"])
+        return FuncCallToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"])
     if "token_type" in dct:
         return AbsToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
     return dct

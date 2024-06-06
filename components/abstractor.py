@@ -7,11 +7,15 @@ import components.lexer as token_rules
 class Abstractor:
     """Abstractor component class to abstract tokens from the lexer."""
 
-    def __init__(self):
-        self.peeked_token = None
+    def __init__(self, file_name):
+
+        # File being abstracted
+        self.file_name = file_name
+
         # Lexer setup
         self.lexer = lex(module=token_rules)
         self.last_token = None
+        self.peeked_token = None
 
         # Abstracting variables/operations/functions
         self.var_abstractor = {}
@@ -200,7 +204,7 @@ class Abstractor:
                 self.in_func_decl = True
 
             case "STRING":  # TODO: What if function call with in function call
-                func_id = self.__get_func_id(t.value)
+                func_id = self.file_name + "/" + self.__get_func_id(t.value)
                 if self.in_func_decl:
                     self.code_block[-1][2] = func_id
                     t.type = func_id

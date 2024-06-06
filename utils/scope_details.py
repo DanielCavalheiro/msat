@@ -4,6 +4,5 @@
 class ScopeDetails:
     """Class to store the details of a function."""
 
-    def __init__(self, arguments, return_values):
+    def __init__(self, arguments):
         self.arguments = arguments
-        self.return_values = return_values

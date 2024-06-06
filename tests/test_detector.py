@@ -13,8 +13,8 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-FILE = "/home/dani/tese/hollingworth_app/xss4.php"
-ENCRYPT_FLAG = True
+FILE = "/home/dani/tese/hollingworth_app/xss3.php"
+ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
@@ -26,10 +26,10 @@ except FileNotFoundError:
 else:
     with data:
 
-        lexer = Abstractor()
+        scope = os.path.basename(FILE)
+        lexer = Abstractor(scope)
         lexer.input(data.read())
 
-        scope = os.path.basename(FILE)
         correlator = Correlator(lexer, {}, 0, 0, scope, {})
         correlator.correlate()
 

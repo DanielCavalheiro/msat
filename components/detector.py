@@ -7,7 +7,7 @@ import utils.crypto_stuff as crypto_stuff
 class Detector:
     """Detector component that detects vulnerabilities"""
 
-    def __init__(self, data_structure, shared_password, encrypt_flag):
+    def __init__(self, data_structure: dict, shared_password, encrypt_flag):
         self.data_structure = data_structure
         self.shared_password = shared_password
         if encrypt_flag:
@@ -17,6 +17,8 @@ class Detector:
             self.special_tokens = {"INPUT": "INPUT", "XSS_SENS": "XSS_SENS",
                                    "XSS_SANF": "XSS_SANF", "SQLI_SENS": "SQLI_SENS", "SQLI_SANF": "SQLI_SANF"}
         self.vuln_type = None
+        self.current_scope = self.data_structure[next(
+            iter(self.data_structure))]
 
     def set_vuln_type(self, vuln_type: str):
         """Sets the vulnerability type"""
@@ -28,11 +30,12 @@ class Detector:
         if query not in self.special_tokens:
             return []
         query = self.special_tokens[query]
-        if query not in self.data_structure:
+
+        if query not in self.current_scope:
             return []
 
         detected_paths = {}
-        for token in self.data_structure[query]:
+        for token in self.current_scope[query]:
             detected_paths_by_sink = []
             current_path = []
             visited = []
@@ -99,7 +102,7 @@ class Detector:
     def __detect_flows(self, detected_paths, current_path, visited, current_token, previous_pos):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
-        if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.data_structure:
+        if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.current_scope:
             paths_to_remove = []
             for path in detected_paths:
                 for i in range(0, min(len(path), len(current_path))):
@@ -113,7 +116,7 @@ class Detector:
             for path in paths_to_remove:
                 detected_paths.remove(path)
         else:
-            for token in self.data_structure[current_token.token_type]:
+            for token in self.current_scope[current_token.token_type]:
                 if token not in visited and (not previous_pos or previous_pos > token.token_pos):
                     previous_pos = current_token.token_pos
                     visited.append(token)

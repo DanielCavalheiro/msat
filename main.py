@@ -8,7 +8,7 @@ from components.correlator import Correlator
 from components.detector import Detector
 from components.encryptor import Encryptor
 import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken, EncToken, token_decoder
+from utils.token_utils import AbsToken, token_decoder
 import os
 
 
@@ -59,7 +59,7 @@ def tokenize(file):
             special_tokens = crypto_stuff.populate_special_tokens(
                 shared_password)  # TODO change location
 
-            def decrypt_token(token: EncToken, secret_password):
+            def decrypt_token(token, secret_password):
                 """Decrypts an encrypted token."""
                 if token.token_type == special_tokens["INPUT"]:
                     token_type = token.token_type
@@ -93,5 +93,5 @@ def tokenize(file):
 
 
 if __name__ == "__main__":
-    FILE = "/home/dani/tese/hollingworth_app/xss4.php"
+    FILE = "/home/dani/tese/hollingworth_app/xss3.php"
     tokenize(FILE)
