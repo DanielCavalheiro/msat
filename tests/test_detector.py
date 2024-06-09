@@ -13,7 +13,7 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-FILE = "/home/dani/tese/hollingworth_app/xss3.php"
+FILE = "/home/dani/tese/hollingworth_app/xss4.php"
 ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")

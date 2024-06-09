@@ -1,6 +1,5 @@
 """Module for the Detector component"""
 
-from utils.token_utils import AbsToken
 import utils.crypto_stuff as crypto_stuff
 
 
@@ -15,10 +14,10 @@ class Detector:
                 shared_password)
         else:
             self.special_tokens = {"INPUT": "INPUT", "XSS_SENS": "XSS_SENS",
-                                   "XSS_SANF": "XSS_SANF", "SQLI_SENS": "SQLI_SENS", "SQLI_SANF": "SQLI_SANF"}
+                                   "FUNC_CALL": "FUNC_CALL", "XSS_SANF": "XSS_SANF",
+                                   "SQLI_SENS": "SQLI_SENS", "SQLI_SANF": "SQLI_SANF"}
         self.vuln_type = None
-        self.current_scope = self.data_structure[next(
-            iter(self.data_structure))]
+        self.current_scope = None
 
     def set_vuln_type(self, vuln_type: str):
         """Sets the vulnerability type"""
@@ -31,10 +30,40 @@ class Detector:
             return []
         query = self.special_tokens[query]
 
+        # FIXME: This is a temporary solution
+        self.current_scope = self.data_structure[next(
+            iter(self.data_structure))]
+
         if query not in self.current_scope:
             return []
 
+        # Detect data flows
         detected_paths = {}
+        self.__detect_paths_in_scope(self.current_scope, query, detected_paths)
+
+        # Check if there are any detected paths
+        if all(len(paths) == 0 for paths in detected_paths.values()):
+            return []
+
+            # Get best matches
+        relevant_paths = self.__get_best_match(detected_paths)
+
+        # Handle Control Flows
+        candidate_paths = self.__handle_control_flows(
+            detected_paths, relevant_paths)
+
+        # Check if paths ends in Input or has a Sanitization fuction
+        result_paths = self.__get_vulnerable_paths(candidate_paths)
+
+        return result_paths
+
+    # ---------------------------------------------------------------------------- #
+    #                              Auxiliar functions                              #
+    # ---------------------------------------------------------------------------- #
+
+    def __detect_paths_in_scope(self, scope, query, detected_paths):
+        """Detects paths in a given scope"""
+
         for token in self.current_scope[query]:
             detected_paths_by_sink = []
             current_path = []
@@ -46,58 +75,6 @@ class Detector:
             detected_paths[token] = []
             for path in detected_paths_by_sink:
                 detected_paths[token].append(path)
-
-        # Check if there are any detected paths
-        if not detected_paths:
-            # No detected paths no vulnerabilities
-            return []
-
-        # Get best matches
-        relevant_paths = []
-        for sink, paths in detected_paths.items():
-            best = None
-            closest = None
-            for i in range(0, max(len(path) for path in paths)):
-                for current_path in paths:
-                    if i < len(current_path):
-                        current_token = current_path[i]
-                        current_sink = current_path[0]
-                        if closest is None:
-                            closest = current_path[i]
-                            best = current_path
-                        elif current_sink.token_pos - current_token.token_pos <= current_sink.token_pos - closest.token_pos:
-                            closest = current_path[i]
-                            best = current_path
-            relevant_paths.append(best)
-
-        # Handle Control Flows
-        candidate_paths = relevant_paths.copy()
-        for relevant_path in relevant_paths:
-            for token in relevant_path:
-                if token.depth > relevant_path[0].depth:
-                    for path in detected_paths[relevant_path[0]]:
-                        if path in candidate_paths:
-                            continue
-                        for current_token in path:
-                            if current_token.token_pos <= token.token_pos:
-                                if current_token.order != token.order:
-                                    candidate_paths.append(path)
-                                elif current_token.order == token.order and current_token.flow_type != token.flow_type:
-                                    candidate_paths.append(path)
-                                elif current_token.order == token.order and current_token.flow_type == token.flow_type and current_token.depth != token.depth:
-                                    candidate_paths.append(path)
-
-        # Check if path ends in Input or has a Sanitization fuction
-        result_paths = []
-        for candidate_path in candidate_paths:
-            for token in candidate_path:
-                if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
-                    break
-                if token.token_type == self.special_tokens["INPUT"]:
-                    result_paths.append(candidate_path)
-                    break
-
-        return result_paths
 
     def __detect_flows(self, detected_paths, current_path, visited, current_token, previous_pos):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
@@ -124,3 +101,57 @@ class Detector:
                         detected_paths, current_path, visited, token, previous_pos)
                     current_path.pop()
                     visited.remove(token)
+
+    def __get_best_match(self, detected_paths):
+        """get the path that is closest to each sink"""
+        relevant_paths = []
+        for sink, paths in detected_paths.items():
+            best = None
+            closest = None
+            for i in range(0, max(len(path) for path in paths)):
+                for current_path in paths:
+                    if i < len(current_path):
+                        current_token = current_path[i]
+                        current_sink = current_path[0]
+                        if closest is None:
+                            closest = current_path[i]
+                            best = current_path
+                        elif current_sink.token_pos - current_token.token_pos <= current_sink.token_pos - closest.token_pos:
+                            closest = current_path[i]
+                            best = current_path
+            relevant_paths.append(best)
+
+        return relevant_paths
+
+    def __handle_control_flows(self, detected_paths, relevant_paths):
+        """check if there are any control flows that need to be considered"""
+        candidate_paths = relevant_paths.copy()
+        for relevant_path in relevant_paths:
+            for token in relevant_path:
+                if token.depth > relevant_path[0].depth:
+                    for path in detected_paths[relevant_path[0]]:
+                        if path in candidate_paths:
+                            continue
+                        for current_token in path:
+                            if current_token.token_pos <= token.token_pos:
+                                if current_token.order != token.order:
+                                    candidate_paths.append(path)
+                                elif current_token.order == token.order and current_token.flow_type != token.flow_type:
+                                    candidate_paths.append(path)
+                                elif current_token.order == token.order and current_token.flow_type == token.flow_type and current_token.depth != token.depth:
+                                    candidate_paths.append(path)
+
+        return candidate_paths
+
+    def __get_vulnerable_paths(self, candidate_paths):
+        """Get the paths that end in a user input"""
+        result_paths = []
+        for candidate_path in candidate_paths:
+            for token in candidate_path:
+                if token.token_type == self.special_tokens[self.vuln_type + "_SANF"]:
+                    break
+                if token.token_type == self.special_tokens["INPUT"]:
+                    result_paths.append(candidate_path)
+                    break
+
+        return result_paths

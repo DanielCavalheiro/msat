@@ -1,45 +1,141 @@
 {
-    "xss3.php": {
+    "xss4.php": {
         "VAR1": [
             {
-                "token_type": "INPUT",
-                "line_num": 2,
-                "token_pos": 11,
+                "token_type": "ENCAPSED_AND_WHITESPACE",
+                "line_num": 3,
+                "token_pos": 13,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
-            },
-            {
-                "token_type": "INPUT",
-                "line_num": 6,
-                "token_pos": 83,
-                "depth": 1,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss3.php"
+                "scope": "xss4.php"
             }
         ],
         "VAR2": [
             {
-                "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 4,
-                "token_pos": 53,
+                "token_type": "FUNC_CALL",
+                "line_num": 5,
+                "token_pos": 31,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
+                "scope": "xss4.php",
+                "func_name": "xss4.php/FUNC1",
+                "arguments": [
+                    {
+                        "token_type": "VAR1",
+                        "line_num": 5,
+                        "token_pos": 29,
+                        "depth": 0,
+                        "order": 0,
+                        "flow_type": 0,
+                        "scope": "xss4.php"
+                    }
+                ]
+            }
+        ],
+        "FUNC_CALL": [
+            {
+                "token_type": "FUNC_CALL",
+                "line_num": 14,
+                "token_pos": 125,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss4.php",
+                "func_name": "xss4.php/FUNC1",
+                "arguments": [
+                    {
+                        "token_type": "VAR1",
+                        "line_num": 14,
+                        "token_pos": 123,
+                        "depth": 0,
+                        "order": 0,
+                        "flow_type": 0,
+                        "scope": "xss4.php"
+                    }
+                ]
+            }
+        ],
+        "VAR4": [
+            {
+                "token_type": "FUNC_CALL",
+                "line_num": 16,
+                "token_pos": 141,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss4.php",
+                "func_name": "xss4.php/FUNC1",
+                "arguments": [
+                    {
+                        "token_type": "VAR1",
+                        "line_num": 16,
+                        "token_pos": 139,
+                        "depth": 0,
+                        "order": 0,
+                        "flow_type": 0,
+                        "scope": "xss4.php"
+                    }
+                ]
             }
         ],
         "XSS_SENS": [
             {
-                "token_type": "VAR1",
-                "line_num": 8,
-                "token_pos": 109,
+                "token_type": "VAR4",
+                "line_num": 18,
+                "token_pos": 150,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
+                "scope": "xss4.php"
+            }
+        ]
+    },
+    "xss4.php/FUNC1": {
+        "VAR3": [
+            {
+                "token_type": "XSS_SANF",
+                "line_num": 10,
+                "token_pos": 78,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss4.php/FUNC1"
+            }
+        ],
+        "FUNC_CALL": [
+            {
+                "token_type": "FUNC_CALL",
+                "line_num": 9,
+                "token_pos": 66,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss4.php/FUNC1",
+                "func_name": "xss4.php/FUNC1",
+                "arguments": [
+                    {
+                        "token_type": "VAR3",
+                        "line_num": 9,
+                        "token_pos": 64,
+                        "depth": 0,
+                        "order": 0,
+                        "flow_type": 0,
+                        "scope": "xss4.php/FUNC1"
+                    }
+                ]
+            }
+        ],
+        "RETURN": [
+            {
+                "token_type": "VAR3",
+                "line_num": 11,
+                "token_pos": 111,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss4.php/FUNC1"
             }
         ]
     }

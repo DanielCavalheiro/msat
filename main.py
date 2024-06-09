@@ -24,8 +24,8 @@ def tokenize(file):
             detecting = "XSS"
 
             # -------------------------------- Client side ------------------------------- #
-
-            lexer = Abstractor()
+            scope = os.path.basename(file)
+            lexer = Abstractor(scope)
             lexer.input(data.read())
 
             scope = os.path.basename(file)
