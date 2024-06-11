@@ -25,8 +25,11 @@ class Correlator:
         self.scopes = scopes  # Dict to store the funcs of this scope and their args
         if current_scope not in self.scopes:
             self.scopes[current_scope] = []
+
+        arguments = self.data_structure[self.current_scope].get("ARGS", [])
         for argument in self.scopes[current_scope]:
-            self.data_structure[self.current_scope][argument.token_type] = []
+            arguments.append(argument)
+        self.data_structure[self.current_scope]["ARGS"] = arguments
 
     def update(self, order, flow_type, current_token, last_token):
         """Update the correlator with new order and flow type."""

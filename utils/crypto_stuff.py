@@ -71,5 +71,7 @@ def populate_special_tokens(shared_password):
         "XSS_SANF": hmac_it("XSS_SANF", shared_password),
         "SQLI_SENS": hmac_it("SQLI_SENS", shared_password),
         "SQLI_SANF": hmac_it("SQLI_SANF", shared_password),
-        "FUNC_CALL": hmac_it("FUNC_CALL", shared_password)
+        "FUNC_CALL": hmac_it("FUNC_CALL", shared_password),
+        "RETURN": hmac_it("RETURN", shared_password),
+        "ARGS": hmac_it("ARGS", shared_password)
     }

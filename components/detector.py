@@ -1,6 +1,7 @@
 """Module for the Detector component"""
 
 import utils.crypto_stuff as crypto_stuff
+from utils.token_utils import AbsToken
 
 
 class Detector:
@@ -14,10 +15,10 @@ class Detector:
                 shared_password)
         else:
             self.special_tokens = {"INPUT": "INPUT", "XSS_SENS": "XSS_SENS",
-                                   "FUNC_CALL": "FUNC_CALL", "XSS_SANF": "XSS_SANF",
-                                   "SQLI_SENS": "SQLI_SENS", "SQLI_SANF": "SQLI_SANF"}
+                                   "XSS_SANF": "XSS_SANF", "SQLI_SENS": "SQLI_SENS",
+                                   "SQLI_SANF": "SQLI_SANF", "FUNC_CALL": "FUNC_CALL",
+                                   "RETURN": "RETURN", "ARGS": "ARGS"}
         self.vuln_type = None
-        self.current_scope = None
 
     def set_vuln_type(self, vuln_type: str):
         """Sets the vulnerability type"""
@@ -31,15 +32,15 @@ class Detector:
         query = self.special_tokens[query]
 
         # FIXME: This is a temporary solution
-        self.current_scope = self.data_structure[next(
+        scope = self.data_structure[next(
             iter(self.data_structure))]
 
-        if query not in self.current_scope:
+        if query not in scope:
             return []
 
         # Detect data flows
         detected_paths = {}
-        self.__detect_paths_in_scope(self.current_scope, query, detected_paths)
+        self.__detect_paths_in_scope(scope, query, detected_paths)
 
         # Check if there are any detected paths
         if all(len(paths) == 0 for paths in detected_paths.values()):
@@ -64,41 +65,60 @@ class Detector:
     def __detect_paths_in_scope(self, scope, query, detected_paths):
         """Detects paths in a given scope"""
 
-        for token in self.current_scope[query]:
+        for token in scope[query]:
             detected_paths_by_sink = []
             current_path = []
             visited = []
             visited.append(token)
             previous_pos = None
-            self.__detect_flows(detected_paths_by_sink, current_path,
+            self.__detect_flows(scope, detected_paths_by_sink, current_path,
                                 visited, token, previous_pos)
             detected_paths[token] = []
             for path in detected_paths_by_sink:
                 detected_paths[token].append(path)
 
-    def __detect_flows(self, detected_paths, current_path, visited, current_token, previous_pos):
+    def __detect_flows(self, scope, detected_paths_by_sink, current_path, visited, current_token, previous_token):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
-        if current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in self.current_scope:
+
+        if current_token.token_type == self.special_tokens["FUNC_CALL"]:
+            previous_token = current_token
+            scope = self.data_structure[current_token.func_name]
+            call_args = current_token.arguments
+
+            query = self.special_tokens["ARGS"]
+            for i, func_arg in enumerate(scope[query]):
+                arg = call_args[i]
+                scope[func_arg.token_type].append(
+                    AbsToken(arg.token_type, func_arg.line_num, func_arg.token_pos, func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.scope))
+
+            query = self.special_tokens["RETURN"]
+            for token in scope[query]:
+                visited.append(token)
+                self.__detect_flows(
+                    scope, detected_paths_by_sink, current_path, visited, token, previous_token)
+                current_path.pop()
+                visited.remove(token)
+        elif current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in scope:
             paths_to_remove = []
-            for path in detected_paths:
+            for path in detected_paths_by_sink:
                 for i in range(0, min(len(path), len(current_path))):
                     if path[i] != current_path[i]:
-                        if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type:
+                        if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
                             if path[i].token_pos < current_path[i].token_pos:
                                 paths_to_remove.append(path)
                             else:
                                 paths_to_remove.append(current_path)
-            detected_paths.append(current_path.copy())
+            detected_paths_by_sink.append(current_path.copy())
             for path in paths_to_remove:
-                detected_paths.remove(path)
+                detected_paths_by_sink.remove(path)
         else:
-            for token in self.current_scope[current_token.token_type]:
-                if token not in visited and (not previous_pos or previous_pos > token.token_pos):
-                    previous_pos = current_token.token_pos
+            for token in scope[current_token.token_type]:
+                if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
+                    previous_token = current_token
                     visited.append(token)
                     self.__detect_flows(
-                        detected_paths, current_path, visited, token, previous_pos)
+                        scope, detected_paths_by_sink, current_path, visited, token, previous_token)
                     current_path.pop()
                     visited.remove(token)
 

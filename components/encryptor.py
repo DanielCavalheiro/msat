@@ -5,7 +5,8 @@ from utils.token_utils import AbsToken, FuncCallToken, TokenEncoder
 import utils.crypto_stuff as crypto_stuff
 
 SPECIAL_TOKENS = ("INPUT", "XSS_SENS", "XSS_SANF",
-                  "SQLI_SENS", "SQLI_SANF", "FUNC_CALL")
+                  "SQLI_SENS", "SQLI_SANF", "FUNC_CALL",
+                  "RETURN", "ARGS")
 
 
 class Encryptor:
@@ -57,23 +58,18 @@ class Encryptor:
             token.scope, secret_password)
 
         if isinstance(token, FuncCallToken):
-            token_type = crypto_stuff.encrypt_sse(
-                token.token_type, secret_password)
+            token_type = crypto_stuff.hmac_it(
+                token.token_type, shared_password)
 
             func_name = crypto_stuff.hmac_it(
-                token.token_type, shared_password)
+                token.func_name, shared_password)
 
             enc_args = []
             for arg in token.arguments:
                 enc_args.append(self.__encrypt_token(
                     arg, secret_password, shared_password))
 
-            enc_ret_vals = []
-            for ret_val in token.return_values:
-                enc_ret_vals.append(self.__encrypt_token(
-                    ret_val, secret_password, shared_password))
-
-            return FuncCallToken(token_type, line_num, position, depth, order, flow_type, scope, func_name, enc_args, enc_ret_vals)
+            return FuncCallToken(token_type, line_num, position, depth, order, flow_type, scope, func_name, enc_args)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:

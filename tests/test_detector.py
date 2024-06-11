@@ -1,3 +1,9 @@
+from utils.token_utils import AbsToken, token_decoder
+import utils.crypto_stuff as crypto_stuff
+from components.detector import Detector
+from components.encryptor import Encryptor
+from components.abstractor import Abstractor
+from components.correlator import Correlator
 import base64
 import json
 import sys
@@ -6,15 +12,9 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from components.correlator import Correlator
-from components.abstractor import Abstractor
-from components.encryptor import Encryptor
-from components.detector import Detector
-import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken, token_decoder
 
 FILE = "/home/dani/tese/hollingworth_app/xss4.php"
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"

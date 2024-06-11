@@ -1,141 +1,55 @@
 {
-    "xss4.php": {
-        "VAR1": [
+    "WW1VME1UY3hOR1U1WVdReE5UaG1PRGt5WVdabU5tTTNaamhsT0dSalpXTTNNemsyTW1FMll3PT0=": {
+        "WXpGaVpUSmpNbUkyTmpZMlptRm1NRFV4TXpnMU9EQmtabUUwWmpOa1lUUmhOMll4Wm1VMU1RPT0=": [],
+        "cG90cTNoc21nU05QaXZiMWpQNzk0K2pJMUdFPQ==": [
             {
-                "token_type": "ENCAPSED_AND_WHITESPACE",
-                "line_num": 3,
-                "token_pos": 13,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php"
+                "token_type": "TUROaFpqRXdOV001TnpjNU9XWTVZamN4TjJJME9XSXdZVGRtWlRkaFl6bGlZVFkxWXpNeE13PT0=",
+                "line_num": "L1ZvVWIvYVQ1VWN2UHNyM1FOVy9oaVU9",
+                "token_pos": 600947,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "aU9qU20yNy9ac2hTM0JyRnpSb0V4UkNmaWo5SVBPSkU="
+            },
+            {
+                "token_type": "cGttL1ZxZUJ5dmlaM0h3cmc1RkMvQ01ONXFKSWpGbGNWSGQxWFNFMnNFSkxrT3BqR2JCQQ==",
+                "line_num": "NnlQd2tSZFJyNjJYZmhqd2thZlZ1ZUU9",
+                "token_pos": 2118521,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "aU9qU20yNy9ac2hTM0JyRnpSb0V4UkNmaWo5SVBPSkU="
+            },
+            {
+                "token_type": "TUROaFpqRXdOV001TnpjNU9XWTVZamN4TjJJME9XSXdZVGRtWlRkaFl6bGlZVFkxWXpNeE13PT0=",
+                "line_num": "eTR6Sm1LMG1PYyt3V3lFRmxwTXpuNGM9",
+                "token_pos": 5027039,
+                "depth": 161081,
+                "order": 161081,
+                "flow_type": 161081,
+                "scope": "aU9qU20yNy9ac2hTM0JyRnpSb0V4UkNmaWo5SVBPSkU="
             }
         ],
-        "VAR2": [
+        "OEowZmRhc29KUUZ5UHJsc2k5VGZIQ3ZCZWwwPQ==": [
             {
-                "token_type": "FUNC_CALL",
-                "line_num": 5,
-                "token_pos": 31,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php",
-                "func_name": "xss4.php/FUNC1",
-                "arguments": [
-                    {
-                        "token_type": "VAR1",
-                        "line_num": 5,
-                        "token_pos": 29,
-                        "depth": 0,
-                        "order": 0,
-                        "flow_type": 0,
-                        "scope": "xss4.php"
-                    }
-                ]
+                "token_type": "SVBIRU1SVUpMcFY1OEJmSVJIZUdoVjdnUm1pdXdaazdJSEFEZy94dG9qeWNDVE1VUjFiUFFnPT0=",
+                "line_num": "Zk05MFlEai9FSEZFcHVXeFVtUUN1Mnc9",
+                "token_pos": 2973430,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "aU9qU20yNy9ac2hTM0JyRnpSb0V4UkNmaWo5SVBPSkU="
             }
         ],
-        "FUNC_CALL": [
+        "WVdSak1EQmtORFl4T1dJelpXTTBNR0poWWpJNU5qRTBPVFUxTVRZM05EUmlOemsyWkdaa05nPT0=": [
             {
-                "token_type": "FUNC_CALL",
-                "line_num": 14,
-                "token_pos": 125,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php",
-                "func_name": "xss4.php/FUNC1",
-                "arguments": [
-                    {
-                        "token_type": "VAR1",
-                        "line_num": 14,
-                        "token_pos": 123,
-                        "depth": 0,
-                        "order": 0,
-                        "flow_type": 0,
-                        "scope": "xss4.php"
-                    }
-                ]
-            }
-        ],
-        "VAR4": [
-            {
-                "token_type": "FUNC_CALL",
-                "line_num": 16,
-                "token_pos": 141,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php",
-                "func_name": "xss4.php/FUNC1",
-                "arguments": [
-                    {
-                        "token_type": "VAR1",
-                        "line_num": 16,
-                        "token_pos": 139,
-                        "depth": 0,
-                        "order": 0,
-                        "flow_type": 0,
-                        "scope": "xss4.php"
-                    }
-                ]
-            }
-        ],
-        "XSS_SENS": [
-            {
-                "token_type": "VAR4",
-                "line_num": 18,
-                "token_pos": 150,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php"
-            }
-        ]
-    },
-    "xss4.php/FUNC1": {
-        "VAR3": [
-            {
-                "token_type": "XSS_SANF",
-                "line_num": 10,
-                "token_pos": 78,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php/FUNC1"
-            }
-        ],
-        "FUNC_CALL": [
-            {
-                "token_type": "FUNC_CALL",
-                "line_num": 9,
-                "token_pos": 66,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php/FUNC1",
-                "func_name": "xss4.php/FUNC1",
-                "arguments": [
-                    {
-                        "token_type": "VAR3",
-                        "line_num": 9,
-                        "token_pos": 64,
-                        "depth": 0,
-                        "order": 0,
-                        "flow_type": 0,
-                        "scope": "xss4.php/FUNC1"
-                    }
-                ]
-            }
-        ],
-        "RETURN": [
-            {
-                "token_type": "VAR3",
-                "line_num": 11,
-                "token_pos": 111,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss4.php/FUNC1"
+                "token_type": "cG90cTNoc21nU05QaXZiMWpQNzk0K2pJMUdFPQ==",
+                "line_num": "aUc0KzBENHpjTEdzd09Ld3hXNjJsOGs9",
+                "token_pos": 7128379,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "aU9qU20yNy9ac2hTM0JyRnpSb0V4UkNmaWo5SVBPSkU="
             }
         ]
     }
