@@ -10,7 +10,7 @@ from components.abstractor import Abstractor
 from components.correlator import Correlator
 
 FILE = "/home/dani/tese/hollingworth_app/xss4.php"
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 
 
 try:
@@ -19,11 +19,11 @@ except FileNotFoundError:
     print("File not found")
 else:
     with data:
-
-        lexer = Abstractor()
+        
+        scope = os.path.basename(FILE)
+        lexer = Abstractor(scope)
         lexer.input(data.read())
 
-        scope = os.path.basename(FILE)
         correlator = Correlator(lexer, {}, 0, 0, scope, {})
         correlator.correlate()
 

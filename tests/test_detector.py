@@ -1,9 +1,3 @@
-from utils.token_utils import AbsToken, token_decoder
-import utils.crypto_stuff as crypto_stuff
-from components.detector import Detector
-from components.encryptor import Encryptor
-from components.abstractor import Abstractor
-from components.correlator import Correlator
 import base64
 import json
 import sys
@@ -12,9 +6,15 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
+from utils.token_utils import AbsToken, token_decoder
+import utils.crypto_stuff as crypto_stuff
+from components.detector import Detector
+from components.encryptor import Encryptor
+from components.abstractor import Abstractor
+from components.correlator import Correlator
 
 FILE = "/home/dani/tese/hollingworth_app/xss4.php"
-ENCRYPT_FLAG = True
+ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
@@ -51,7 +51,9 @@ else:
         def decrypt_token(token, secret_password):
             """Decrypts an encrypted token."""
             if token.token_type == special_tokens["INPUT"]:
-                token_type = token.token_type
+                token_type = "INPUT"
+            elif token.token_type == special_tokens["FUNC_CALL"]:
+                token_type = "FUNC_CALL"
             else:
                 token_type = crypto_stuff.decrypt_sse(base64.b64decode(
                     base64.b64decode(token.token_type)), secret_password)

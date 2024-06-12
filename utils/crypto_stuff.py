@@ -4,6 +4,8 @@ import base64
 import hashlib
 import hmac
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import unpad
 from pyope.ope import OPE, ValueRange
 
 
@@ -19,17 +21,21 @@ def generate_key(password):
 def encrypt_sse(data, password):
     """Encrypts data using deterministic AES in SIV mode."""
     cipher = AES.new(password, AES.MODE_SIV)
-    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
+    # Add padding, 25 so that it is the same size as hmac
+    padded_data = pad(data.encode(), 25)
+    ciphertext, tag = cipher.encrypt_and_digest(padded_data)
     return base64.b64encode(base64.b64encode(ciphertext + tag)).decode("utf-8")
 
 
-# Here for testing purposes and will not be used in the final implementation
+# Here for testing purposes and will not be used in the final implementation?
 def decrypt_sse(encrypted_data, password):
     """Decrypts data using deterministic AES in SIV mode."""
     cipher = AES.new(password, AES.MODE_SIV)
     ciphertext, tag = encrypted_data[:-16], encrypted_data[-16:]
     decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
-    return decrypted_data.decode()
+    # Remove padding, 25 so that it is the same size as hmac
+    unpadded_data = unpad(decrypted_data, 25)
+    return unpadded_data.decode()
 
 
 # ------------------------------------ OPE ----------------------------------- #

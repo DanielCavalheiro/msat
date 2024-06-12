@@ -20,27 +20,42 @@ class Detector:
                                    "RETURN": "RETURN", "ARGS": "ARGS"}
         self.vuln_type = None
 
+        self.analysed_function_calls = []
+
     def set_vuln_type(self, vuln_type: str):
         """Sets the vulnerability type"""
         self.vuln_type = vuln_type
 
     def detect_vulnerability(self):
         """Detects a vulnerability in the data structure"""
-        query = self.vuln_type + "_SENS"
-        if query not in self.special_tokens:
-            return []
-        query = self.special_tokens[query]
-
-        # FIXME: This is a temporary solution
-        scope = self.data_structure[next(
-            iter(self.data_structure))]
-
-        if query not in scope:
-            return []
 
         # Detect data flows
         detected_paths = {}
-        self.__detect_paths_in_scope(scope, query, detected_paths)
+        vul_query = self.special_tokens[self.vuln_type + "_SENS"]
+        fun_query = self.special_tokens["FUNC_CALL"]
+        args_query = self.special_tokens["ARGS"]
+        for scope in self.data_structure.values():
+            if vul_query in scope:
+                self.__detect_paths_in_scope(scope, vul_query, detected_paths)
+
+            if fun_query in scope:
+                for func_call in scope[fun_query]:
+                    if func_call in self.analysed_function_calls:
+                        continue
+                    self.analysed_function_calls.append(func_call)
+                    func_scope = self.data_structure[func_call.func_name].copy(
+                    )
+                    call_args = func_call.arguments
+                    for i, func_arg in enumerate(func_scope[args_query]):
+                        call_arg = call_args[i]
+                        arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                       func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                        func_arg_correlations = scope.get(
+                            func_arg.token_type, [])
+                        func_arg_correlations.append(arg)
+                        func_scope[func_arg.token_type] = func_arg_correlations
+                    self.__detect_paths_in_scope(
+                        func_scope, vul_query, detected_paths)
 
         # Check if there are any detected paths
         if all(len(paths) == 0 for paths in detected_paths.values()):
@@ -73,25 +88,36 @@ class Detector:
             previous_pos = None
             self.__detect_flows(scope, detected_paths_by_sink, current_path,
                                 visited, token, previous_pos)
-            detected_paths[token] = []
+
+            paths = detected_paths.get(token, [])
             for path in detected_paths_by_sink:
-                detected_paths[token].append(path)
+                paths.append(path)
+            if len(paths) > 0:
+                detected_paths[token] = paths
 
     def __detect_flows(self, scope, detected_paths_by_sink, current_path, visited, current_token, previous_token):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
 
         if current_token.token_type == self.special_tokens["FUNC_CALL"]:
+            if current_token in self.analysed_function_calls:
+                return
+            self.analysed_function_calls.append(current_token)
             previous_token = current_token
-            scope = self.data_structure[current_token.func_name]
+            scope = self.data_structure[current_token.func_name].copy()
             call_args = current_token.arguments
 
+            # Add func call arguments to the scope
             query = self.special_tokens["ARGS"]
             for i, func_arg in enumerate(scope[query]):
-                arg = call_args[i]
-                scope[func_arg.token_type].append(
-                    AbsToken(arg.token_type, func_arg.line_num, func_arg.token_pos, func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.scope))
+                call_arg = call_args[i]
+                arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                               func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                func_arg_correlations = scope.get(func_arg.token_type, [])
+                func_arg_correlations.append(arg)
+                scope[func_arg.token_type] = func_arg_correlations
 
+            # Recursiveley find flows in the function scope
             query = self.special_tokens["RETURN"]
             for token in scope[query]:
                 visited.append(token)
@@ -99,6 +125,19 @@ class Detector:
                     scope, detected_paths_by_sink, current_path, visited, token, previous_token)
                 current_path.pop()
                 visited.remove(token)
+
+        elif self.data_structure[current_token.scope] != scope:
+            previous_token = current_token
+            scope = self.data_structure[current_token.scope]
+            for token in scope[current_token.token_type]:  # Todo repeated code
+                if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
+                    previous_token = current_token
+                    visited.append(token)
+                    self.__detect_flows(
+                        scope, detected_paths_by_sink, current_path, visited, token, previous_token)
+                    current_path.pop()
+                    visited.remove(token)
+
         elif current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in scope:
             paths_to_remove = []
             for path in detected_paths_by_sink:
@@ -113,9 +152,9 @@ class Detector:
             for path in paths_to_remove:
                 detected_paths_by_sink.remove(path)
         else:
+            previous_token = current_token
             for token in scope[current_token.token_type]:
                 if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
-                    previous_token = current_token
                     visited.append(token)
                     self.__detect_flows(
                         scope, detected_paths_by_sink, current_path, visited, token, previous_token)
@@ -125,7 +164,7 @@ class Detector:
     def __get_best_match(self, detected_paths):
         """get the path that is closest to each sink"""
         relevant_paths = []
-        for sink, paths in detected_paths.items():
+        for _, paths in detected_paths.items():
             best = None
             closest = None
             for i in range(0, max(len(path) for path in paths)):

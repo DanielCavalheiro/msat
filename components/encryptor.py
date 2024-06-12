@@ -25,7 +25,7 @@ class Encryptor:
 
         encrypted_ds = {}  # Encrypted data structure
         for scope, values in data_structure.items():
-            enc_scope = crypto_stuff.hmac_it(scope, shared_password)
+            enc_scope = crypto_stuff.encrypt_sse(scope, secret_password)
             encrypted_ds[enc_scope] = {}
             for key, vs in values.items():
                 if key in SPECIAL_TOKENS:
@@ -61,8 +61,8 @@ class Encryptor:
             token_type = crypto_stuff.hmac_it(
                 token.token_type, shared_password)
 
-            func_name = crypto_stuff.hmac_it(
-                token.func_name, shared_password)
+            func_name = crypto_stuff.encrypt_sse(
+                token.func_name, secret_password)
 
             enc_args = []
             for arg in token.arguments:
