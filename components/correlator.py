@@ -28,7 +28,8 @@ class Correlator:
 
         arguments = self.data_structure[self.current_scope].get("ARGS", [])
         for argument in self.scopes[current_scope]:
-            arguments.append(argument)
+            if argument not in arguments:
+                arguments.append(argument)
         self.data_structure[self.current_scope]["ARGS"] = arguments
 
     def update(self, order, flow_type, current_token, last_token):

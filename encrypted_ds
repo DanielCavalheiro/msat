@@ -1,0 +1,56 @@
+{
+    "xss3.php": {
+        "ARGS": [],
+        "VAR1": [
+            {
+                "token_type": "INPUT",
+                "line_num": 2,
+                "token_pos": 11,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss3.php"
+            },
+            {
+                "token_type": "INPUT",
+                "line_num": 5,
+                "token_pos": 65,
+                "depth": 1,
+                "order": 1,
+                "flow_type": 1,
+                "scope": "xss3.php"
+            },
+            {
+                "token_type": "ENCAPSED_AND_WHITESPACE",
+                "line_num": 7,
+                "token_pos": 92,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss3.php"
+            }
+        ],
+        "VAR2": [
+            {
+                "token_type": "CONSTANT_ENCAPSED_STRING",
+                "line_num": 3,
+                "token_pos": 35,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss3.php"
+            }
+        ],
+        "XSS_SENS": [
+            {
+                "token_type": "VAR1",
+                "line_num": 8,
+                "token_pos": 107,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss3.php"
+            }
+        ]
+    }
+}

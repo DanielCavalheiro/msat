@@ -13,7 +13,7 @@ from components.encryptor import Encryptor
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 
-FILE = "/home/dani/tese/hollingworth_app/xss4.php"
+FILE = "/home/dani/tese/hollingworth_app/xss3.php"
 ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
