@@ -12,29 +12,29 @@
                 "scope": "xss3.php"
             },
             {
-                "token_type": "INPUT",
-                "line_num": 5,
-                "token_pos": 65,
-                "depth": 1,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss3.php"
-            },
-            {
                 "token_type": "ENCAPSED_AND_WHITESPACE",
-                "line_num": 7,
-                "token_pos": 92,
+                "line_num": 3,
+                "token_pos": 36,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
+                "scope": "xss3.php"
+            },
+            {
+                "token_type": "INPUT",
+                "line_num": 6,
+                "token_pos": 81,
+                "depth": 1,
+                "order": 1,
+                "flow_type": 1,
                 "scope": "xss3.php"
             }
         ],
         "VAR2": [
             {
                 "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 3,
-                "token_pos": 35,
+                "line_num": 4,
+                "token_pos": 51,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,

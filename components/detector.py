@@ -168,31 +168,31 @@ class Detector:
                     current_path.pop()
                     visited.remove(token)
 
-    def is_token_an_argument(self, token, scope_values):
-        """Check if a token is an argument of a function call"""
-        for arg in scope_values[self.special_tokens["ARGS"]]:
-            if arg.token_type == token.token_type:
-                return True
-        return False
-
     def __get_best_match(self, detected_paths):
         """get the path that is closest to each sink"""
         relevant_paths = []
         for _, paths in detected_paths.items():
+            paths_to_analyse = paths.copy()
+            for path in paths:
+                if len(path) == 1:
+                    relevant_paths.append(path)
+                    paths_to_analyse.remove(path)
             best = None
             closest = None
-            for i in range(0, max(len(path) for path in paths)):
-                for current_path in paths:
-                    if i < len(current_path):
-                        current_token = current_path[i]
-                        current_sink = current_path[0]
-                        if closest is None:
-                            closest = current_path[i]
-                            best = current_path
-                        elif current_sink.token_pos - current_token.token_pos <= current_sink.token_pos - closest.token_pos:
-                            closest = current_path[i]
-                            best = current_path
-            relevant_paths.append(best)
+            if paths_to_analyse:
+                for i in range(1, max(len(path) for path in paths_to_analyse)):
+                    for current_path in paths:
+                        if i < len(current_path):
+                            current_token = current_path[i]
+                            current_sink = current_path[0]
+                            if closest is None:
+                                closest = current_path[i]
+                                best = current_path
+                            elif current_sink.token_pos - current_token.token_pos < current_sink.token_pos - closest.token_pos:
+                                closest = current_path[i]
+                                best = current_path
+            if best:
+                relevant_paths.append(best)
 
         return relevant_paths
 
