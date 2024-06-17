@@ -6,7 +6,7 @@ from components.correlator import Correlator
 from components.abstractor import Abstractor
 
 
-FILE = "/home/dani/tese/hollingworth_app/xss3.php"
+FILE = "/home/dani/tese/hollingworth_app/xss5.php"
 
 try:
     data = open(FILE, "r", encoding="utf-8")

@@ -141,7 +141,7 @@ class Abstractor:
                     self.var_abstractor[t.value] = f"VAR{self.var_count}"
                     t.type = f"VAR{self.var_count}"
 
-            case "OPERATOR" | "CONCAT":
+            case "OPERATOR":
                 if t.value == "=":
                     t.type = "OP0"
                 elif t.value in self.op_abstractor:

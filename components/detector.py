@@ -175,6 +175,8 @@ class Detector:
                             paths_to_remove.append(path)
                         else:
                             paths_to_remove.append(current_path)
+                    else:
+                        break
         detected_paths_by_sink.append(current_path.copy())
         for path in paths_to_remove:
             detected_paths_by_sink.remove(path)
@@ -220,10 +222,13 @@ class Detector:
                             if current_token.token_pos <= token.token_pos:
                                 if current_token.order != token.order:
                                     candidate_paths.append(path)
+                                    break
                                 elif current_token.order == token.order and current_token.flow_type != token.flow_type:
                                     candidate_paths.append(path)
+                                    break
                                 elif current_token.order == token.order and current_token.flow_type == token.flow_type and current_token.depth != token.depth:
                                     candidate_paths.append(path)
+                                    break
 
         return candidate_paths
 

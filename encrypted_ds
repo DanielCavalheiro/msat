@@ -1,55 +1,86 @@
 {
-    "xss3.php": {
+    "xss5.php": {
         "ARGS": [],
         "VAR1": [
             {
                 "token_type": "INPUT",
-                "line_num": 2,
-                "token_pos": 11,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss3.php"
-            },
-            {
-                "token_type": "ENCAPSED_AND_WHITESPACE",
                 "line_num": 3,
-                "token_pos": 36,
+                "token_pos": 12,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
-            },
-            {
-                "token_type": "INPUT",
-                "line_num": 6,
-                "token_pos": 81,
-                "depth": 1,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss3.php"
+                "scope": "xss5.php"
             }
         ],
         "VAR2": [
             {
                 "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 4,
-                "token_pos": 51,
+                "line_num": 5,
+                "token_pos": 37,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
+                "scope": "xss5.php"
+            }
+        ],
+        "VAR3": [
+            {
+                "token_type": "CONSTANT_ENCAPSED_STRING",
+                "line_num": 7,
+                "token_pos": 54,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss5.php"
+            }
+        ],
+        "VAR4": [
+            {
+                "token_type": "CONSTANT_ENCAPSED_STRING",
+                "line_num": 9,
+                "token_pos": 73,
+                "depth": 0,
+                "order": 0,
+                "flow_type": 0,
+                "scope": "xss5.php"
+            },
+            {
+                "token_type": "VAR2",
+                "line_num": 12,
+                "token_pos": 110,
+                "depth": 1,
+                "order": 1,
+                "flow_type": 1,
+                "scope": "xss5.php"
+            },
+            {
+                "token_type": "VAR1",
+                "line_num": 12,
+                "token_pos": 115,
+                "depth": 2,
+                "order": 1,
+                "flow_type": 1,
+                "scope": "xss5.php"
+            },
+            {
+                "token_type": "VAR3",
+                "line_num": 12,
+                "token_pos": 120,
+                "depth": 3,
+                "order": 1,
+                "flow_type": 1,
+                "scope": "xss5.php"
             }
         ],
         "XSS_SENS": [
             {
-                "token_type": "VAR1",
-                "line_num": 8,
-                "token_pos": 107,
+                "token_type": "VAR4",
+                "line_num": 15,
+                "token_pos": 132,
                 "depth": 0,
                 "order": 0,
                 "flow_type": 0,
-                "scope": "xss3.php"
+                "scope": "xss5.php"
             }
         ]
     }

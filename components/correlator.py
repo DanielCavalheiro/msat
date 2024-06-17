@@ -112,6 +112,43 @@ class Correlator:
 
             self.last_token = self.current_token
 
+    def concat_correlate(self, assignors):
+        """Correlate the concatenation operation."""
+        self.current_token = self.__next_token()
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
+
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                assignors.append(self.current_token)
+
+            elif "CONCAT" == self.current_token.token_type:
+                # Handle concatenation as if it was a control flow
+                self.control_flow_counter += 1
+                self.__handle_concat(
+                    assignors, self.control_flow_counter, 1)
+                break
+
+            elif ("FUNC_CALL" in self.current_token.token_type):
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                arguments = self.__handle_func_call()
+                assignors.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                 self.order, self.flow_type, self.current_scope, func_name, arguments))
+
+            elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            elif "SQLI_SENS" == self.current_token.token_type:
+                assignors.append(self.current_token)
+                self.__handle_sqli_sens()
+
+            self.current_token = self.__next_token()
+
     # ---------------------------------------------------------------------------- #
     #                              Auxiliary functions                             #
     # ---------------------------------------------------------------------------- #
@@ -142,6 +179,13 @@ class Correlator:
             if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
+            elif "CONCAT" == self.current_token.token_type:
+                # Handle concatenation as if it was a control flow
+                self.control_flow_counter += 1
+                self.__handle_concat(
+                    assignors, self.control_flow_counter, 1)
+                break
+
             elif ("FUNC_CALL" in self.current_token.token_type):
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
@@ -166,6 +210,14 @@ class Correlator:
 
         if assignors:
             self.data_structure[self.current_scope][assignee_name] = assignors
+
+    def __handle_concat(self, assignors, order: int, flow_type: int):
+        if not self.next_depth_correlator:
+            self.next_depth_correlator = Correlator(
+                self.abstractor, self.data_structure, self.depth + 1, flow_type, self.current_scope, self.scopes)
+        self.next_depth_correlator.update(
+            order, flow_type, self.current_token, self.last_token)
+        self.next_depth_correlator.concat_correlate(assignors)
 
     # --------------------------------- functions -------------------------------- #
 

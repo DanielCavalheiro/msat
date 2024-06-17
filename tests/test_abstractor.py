@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(
 
 from components.abstractor import Abstractor
 
-FILE = "/home/dani/tese/hollingworth_app/xss4.php"
+FILE = "/home/dani/tese/hollingworth_app/xss5.php"
 
 try:
     data = open(FILE, "r", encoding="utf-8")
