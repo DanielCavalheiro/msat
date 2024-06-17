@@ -132,32 +132,28 @@ class Detector:
                 current_path.pop()
                 visited.remove(token)
 
-        elif current_token.scope != scope_key:
-            previous_token = current_token
-            scope_values = self.data_structure[current_token.scope]
-            for token in scope_values[current_token.token_type]:  # Todo repeated code
-                if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
-                    previous_token = current_token
-                    visited.append(token)
-                    self.__detect_flows(
-                        current_token.scope, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
-                    current_path.pop()
-                    visited.remove(token)
-
         # TODO should be up
-        elif current_token.token_type == self.special_tokens["INPUT"] or current_token.token_type not in scope_values:
-            paths_to_remove = []
-            for path in detected_paths_by_sink:
-                for i in range(0, min(len(path), len(current_path))):
-                    if path[i] != current_path[i]:
-                        if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
-                            if path[i].token_pos < current_path[i].token_pos:
-                                paths_to_remove.append(path)
-                            else:
-                                paths_to_remove.append(current_path)
-            detected_paths_by_sink.append(current_path.copy())
-            for path in paths_to_remove:
-                detected_paths_by_sink.remove(path)
+        elif current_token.token_type not in scope_values:
+            # if the curremt token is a input then path must conclude imedialety
+            if current_token.token_type == self.special_tokens["INPUT"]:
+                self.__conclude_path(current_path, detected_paths_by_sink)
+            # if the current token scope is different to the current scope must find the token in the other scope
+            elif current_token.scope != scope_key:
+                previous_token = current_token
+                scope_values = self.data_structure[current_token.scope]
+                # Todo repeated code
+                for token in scope_values[current_token.token_type]:
+                    if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
+                        previous_token = current_token
+                        visited.append(token)
+                        self.__detect_flows(
+                            current_token.scope, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
+                        current_path.pop()
+                        visited.remove(token)
+            # Probably a string or something else unknwon and so the path must conclude
+            else:
+                self.__conclude_path(current_path, detected_paths_by_sink)
+
         else:
             previous_token = current_token
             for token in scope_values[current_token.token_type]:
@@ -167,6 +163,21 @@ class Detector:
                         scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
                     current_path.pop()
                     visited.remove(token)
+
+    def __conclude_path(self, current_path, detected_paths_by_sink):
+        """Conclude the current path"""
+        paths_to_remove = []
+        for path in detected_paths_by_sink:
+            for i in range(0, min(len(path), len(current_path))):
+                if path[i] != current_path[i]:
+                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
+                        if path[i].token_pos < current_path[i].token_pos:
+                            paths_to_remove.append(path)
+                        else:
+                            paths_to_remove.append(current_path)
+        detected_paths_by_sink.append(current_path.copy())
+        for path in paths_to_remove:
+            detected_paths_by_sink.remove(path)
 
     def __get_best_match(self, detected_paths):
         """get the path that is closest to each sink"""
