@@ -290,7 +290,7 @@ reserved_map = {
 }
 
 tainted_variables = []
-with open('components/knowledge_source.yaml', encoding='utf-8') as file:
+with open('../components/knowledge_source.yaml', encoding='utf-8') as file:
     try:
         knowledge = yaml.safe_load(file)
 

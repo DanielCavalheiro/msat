@@ -14,11 +14,11 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-FILE = "/home/dani/tese/hollingworth_app/xss6.php"
+FILE = "/home/dani/tese/hollingworth_app/sqli1.php"
 ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
-DETECTING = "XSS"
+DETECTING = "SQLI"
 
 try:
     data = open(FILE, "r", encoding="utf-8")
@@ -39,15 +39,14 @@ else:
             correlator.data_structure, SECRET_PASSWORD, SHARED_PASSWORD)
 
         encrypted_ds = {}
-        with open("encrypted_ds", "r", encoding="utf-8") as f:
+        with open("../encrypted_ds", "r", encoding="utf-8") as f:
+            decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
             encrypted_ds = json.loads(
-                f.read(), object_hook=token_decoder)
+                decrypted_data, object_hook=token_decoder)
 
         detector = None
         if ENCRYPT_FLAG:
-
             detector = Detector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
-
         else:
             detector = OldDetector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
 

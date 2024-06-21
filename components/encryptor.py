@@ -19,11 +19,12 @@ class Encryptor:
         """Encrypt the data structure with the given password."""
 
         if not self.encrypt_flag:
-            with open("encrypted_ds", "w", encoding="utf-8") as f:
+            with open("../encrypted_ds", "w", encoding="utf-8") as f:
                 json.dump(data_structure, f, cls=TokenEncoder, indent=4)
             return
 
         encrypted_ds = {}  # Encrypted data structure
+        encrypted_data = None
         for scope, values in data_structure.items():
             enc_scope = crypto_stuff.encrypt_sse(scope, secret_password)
             enc_scope = crypto_stuff.hmac_it(enc_scope, shared_password)
@@ -43,8 +44,11 @@ class Encryptor:
                         self.__encrypt_token(value, secret_password, shared_password))
                 encrypted_ds[enc_scope][enc_key] = enc_assignors
 
-        with open("encrypted_ds", "w", encoding="utf-8") as f:
-            json.dump(encrypted_ds, f, cls=TokenEncoder, indent=4)
+                encrypted_ds_json = json.dumps(encrypted_ds, cls=TokenEncoder, indent=4)
+                encrypted_data = crypto_stuff.encrypt_gcm(encrypted_ds_json, shared_password)
+
+        with open("../encrypted_ds", "w", encoding="utf-8") as f:
+            json.dump(encrypted_data, f, cls=TokenEncoder, indent=4)
 
     def __encrypt_token(self, token, secret_password, shared_password):
         """Encrypt the token with the given password."""

@@ -1,6 +1,7 @@
 """Abstract token class to represent tokens after abstraction and correlation."""
 
 import json
+from . import crypto_stuff
 
 
 class AbsToken:
@@ -39,7 +40,6 @@ class FuncCallToken(AbsToken):
 
 class TokenEncoder(json.JSONEncoder):
     """JSON encoder for EncToken class."""
-
     def default(self, o):
         if isinstance(o, AbsToken) or isinstance(o, FuncCallToken):
             return o.__dict__

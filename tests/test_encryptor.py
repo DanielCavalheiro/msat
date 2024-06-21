@@ -1,15 +1,15 @@
-from components.correlator import Correlator
-from components.abstractor import Abstractor
-from components.encryptor import Encryptor
-import utils.crypto_stuff as crypto_stuff
 import sys
 import os
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
+import utils.crypto_stuff as crypto_stuff
+from components.encryptor import Encryptor
+from components.abstractor import Abstractor
+from components.correlator import Correlator
 
-FILE = "/home/dani/tese/hollingworth_app/xss6.php"
+FILE = "/home/dani/tese/hollingworth_app/sqli1.php"
 ENCRYPT_FLAG = True
 
 
@@ -19,7 +19,7 @@ except FileNotFoundError:
     print("File not found")
 else:
     with data:
-
+        
         scope = os.path.basename(FILE)
         lexer = Abstractor(scope)
         lexer.input(data.read())

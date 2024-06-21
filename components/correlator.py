@@ -49,7 +49,7 @@ class Correlator:
                 # Leave the current depth/func
                 break
 
-            self.current_token = self.__next_token()  # Next token to correalate
+            self.current_token = self.__next_token()  # Next token to correlate
 
             if not self.current_token:
                 break  # End of correlation at current depth
@@ -72,8 +72,7 @@ class Correlator:
 
             elif token_type == "ELSEIF":
                 elseif_counter += 1
-                self.__correlate_next_depth(
-                    self.control_flow_counter, elseif_counter)
+                self.__correlate_next_depth(self.control_flow_counter, elseif_counter)
 
             elif token_type in ["WHILE", "FOR", "FOREACH", "SWITCH", "DO"]:
                 self.control_flow_counter += 1
@@ -87,9 +86,9 @@ class Correlator:
                 func_name = self.current_token.token_type.split(":", 1)[1]
 
                 arguments = self.__handle_func_call()
-                func_calls = self.data_structure[self.current_scope].get(
-                    "FUNC_CALL", [])
-                func_calls.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                func_calls = self.data_structure[self.current_scope].get("FUNC_CALL", [])
+                func_calls.append(
+                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
                                   self.order, self.flow_type, self.current_scope, func_name, arguments))
                 self.data_structure[self.current_scope]["FUNC_CALL"] = func_calls
 
@@ -117,21 +116,22 @@ class Correlator:
         self.current_token = self.__next_token()
         while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
             elif "CONCAT" == self.current_token.token_type:
                 # Handle concatenation as if it was a control flow
                 self.control_flow_counter += 1
-                self.__handle_concat(
-                    assignors, self.control_flow_counter, 1)
+                self.__handle_concat(assignors, self.control_flow_counter, 1)
                 break
 
             elif ("FUNC_CALL" in self.current_token.token_type):
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
-                assignors.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                 self.order, self.flow_type, self.current_scope, func_name, arguments))
+                assignors.append(
+                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                  self.order, self.flow_type, self.current_scope, func_name, arguments))
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -162,35 +162,34 @@ class Correlator:
 
     def __correlate_next_depth(self, order: int, flow_type: int):
         if not self.next_depth_correlator:
-            self.next_depth_correlator = Correlator(
-                self.abstractor, self.data_structure, self.depth + 1, flow_type, self.current_scope, self.scopes)
-        self.next_depth_correlator.update(
-            order, flow_type, self.current_token, self.last_token)
+            self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
+                                                    self.current_scope, self.scopes)
+        self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
 
     def __handle_correlation(self, assignee: AbsToken):
         """Handle assignment operations creating data flow."""
         assignee_name = assignee.token_type
-        assignors = self.data_structure[self.current_scope].get(
-            assignee_name, [])
+        assignors = self.data_structure[self.current_scope].get(assignee_name, [])
 
         while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
             elif "CONCAT" == self.current_token.token_type:
                 # Handle concatenation as if it was a control flow
                 self.control_flow_counter += 1
-                self.__handle_concat(
-                    assignors, self.control_flow_counter, 1)
+                self.__handle_concat(assignors, self.control_flow_counter, 1)
                 break
 
             elif ("FUNC_CALL" in self.current_token.token_type):
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
-                assignors.append(FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                 self.order, self.flow_type, self.current_scope, func_name, arguments))
+                assignors.append(
+                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                  self.order, self.flow_type, self.current_scope, func_name, arguments))
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -213,10 +212,9 @@ class Correlator:
 
     def __handle_concat(self, assignors, order: int, flow_type: int):
         if not self.next_depth_correlator:
-            self.next_depth_correlator = Correlator(
-                self.abstractor, self.data_structure, self.depth + 1, flow_type, self.current_scope, self.scopes)
-        self.next_depth_correlator.update(
-            order, flow_type, self.current_token, self.last_token)
+            self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
+                                                    self.current_scope, self.scopes)
+        self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.concat_correlate(assignors)
 
     # --------------------------------- functions -------------------------------- #
@@ -233,8 +231,7 @@ class Correlator:
                 self.scopes[scope_name].append(self.current_token)
             self.current_token = self.__next_token()
 
-        func_correlator = Correlator(
-            self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
+        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
         func_correlator.correlate()
 
     def __handle_func_call(self):
@@ -244,7 +241,8 @@ class Correlator:
         # FIXME: multiple tokens could come for the same argument :(
         while self.current_token and self.current_token.token_type != "END_PARENS":
 
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in ("ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 arguments.append(self.current_token)
 
             elif ("FUNC_CALL" in self.current_token.token_type):

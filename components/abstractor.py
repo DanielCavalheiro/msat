@@ -98,11 +98,11 @@ class Abstractor:
             # Insert semicolons in place of close tags where necessary.
             if t.type == "CLOSE_TAG":
                 if self.last_token and self.last_token.type in (
-                    "OPEN_TAG",
-                    "SEMI",
-                    "COLON",
-                    "LBRACE",
-                    "RBRACE",
+                        "OPEN_TAG",
+                        "SEMI",
+                        "COLON",
+                        "LBRACE",
+                        "RBRACE",
                 ):
                     # Don't insert semicolons after these tokens.
                     pass
