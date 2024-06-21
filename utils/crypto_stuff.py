@@ -54,6 +54,26 @@ def decrypt_ope(encrypted_data, password):
     return ope.decrypt(encrypted_data)
 
 
+# ------------------------------------ GCM ----------------------------------- #
+
+def encrypt_gcm(data, password):
+    """Encrypts data using AES in GCM mode."""
+    cipher = AES.new(password, AES.MODE_GCM)
+    nonce = cipher.nonce
+    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
+    return base64.b64encode(nonce + ciphertext + tag).decode("utf-8")
+
+
+def decrypt_gcm(encrypted_data, password):
+    """Decrypts data using AES in GCM mode."""
+    decoded_data = base64.b64decode(encrypted_data)
+    nonce, ciphertext, tag = decoded_data[:16], decoded_data[16:-
+                                                             16], decoded_data[-16:]
+    cipher = AES.new(password, AES.MODE_GCM, nonce=nonce)
+    decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
+    return decrypted_data.decode()
+
+
 # ----------------------------------- HASH ----------------------------------- #
 
 def hash_it(data):
@@ -65,7 +85,8 @@ def hash_it(data):
 
 def hmac_it(data, password):
     """Hashes data using HMAC with SHA."""
-    h = hmac.new(password, data.encode(), hashlib.sha1)
+    h = hmac.new(password, data.encode(),
+                 hashlib.sha1)  # FIXME SHA1 might need to be changed
     return base64.b64encode(base64.b64encode(h.hexdigest().encode())).decode("utf-8")
 
 

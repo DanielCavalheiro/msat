@@ -1,86 +1,73 @@
 {
-    "xss5.php": {
-        "ARGS": [],
-        "VAR1": [
+    "TmpBME5tTmlORFl6WXpFME5HSTVPREprWldReE16YzNPVEppWWpGa01EUmxaVFptWkRGbFlnPT0=": {
+        "TmpZMlpqTTFNekUyTURrd1pqaGtPRFkwWVdRMlpUbGhOemRpTXpabE1HTXpNMlF5TmpSbVlRPT0=": [],
+        "TUdFNE5HUTBOR05rTW1Jek9EVXhOekZsTTJNM05tVTJNRFkwWW1FelpXTTJPRGszWWpJeFpnPT0=": [
             {
-                "token_type": "INPUT",
-                "line_num": 3,
-                "token_pos": 12,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss5.php"
+                "token_type": "TUROaFpqRXdOV001TnpjNU9XWTVZamN4TjJJME9XSXdZVGRtWlRkaFl6bGlZVFkxWXpNeE13PT0=",
+                "line_num": "dnRBUFFJWWdRaC94RnI0NnpSam13Vm9lbnBZdTQ2VWkxMXBnODFwMEYwNlJPM2NVZVBic1hDST0=",
+                "token_pos": 638258,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "SG9VcllnWk1xaDFsR1kwaS94dzJZaUZWQnEvRS92am04WFhhRFhjbkFkdExxZWUyZGVMd2dPWT0="
             }
         ],
-        "VAR2": [
+        "WTJGaE16RXhZamhoTURNNE1qSmxPRGMyWlRjd016UTJPVFV3WWprNU5tUTRaamhpTVRjeVpRPT0=": [
             {
-                "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 5,
-                "token_pos": 37,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss5.php"
+                "token_type": "TURjd05EZGlaV1kwTXpWa09UazBNbUkyWVdFeU1UVmhZalEwTVRZek16RTBZbUZqT0RBMU53PT0=",
+                "line_num": "ZktCcDBZUDFxb1dJVnpsQ042a0pZa2ozcVc3NEkrd2Qvc0FIMU9qTGhlMlNBYUJYRkVCTEowZz0=",
+                "token_pos": 2419814,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "SG9VcllnWk1xaDFsR1kwaS94dzJZaUZWQnEvRS92am04WFhhRFhjbkFkdExxZWUyZGVMd2dPWT0=",
+                "func_name": "UW1OS2ZyVm56ZnVJa0hjNDV0MFRpT0xCRXlHVjFPQ3JwekNFcG8wSVlIcllXM0VxNVJWYUc5dz0=",
+                "arguments": [
+                    {
+                        "token_type": "VkFqQjgyN0xrTFI1Snh4SFRBNXdsYldENGQvZ1Rtdzh1NWhWT3poM3dFMlZvRjZTVldrTVArRT0=",
+                        "line_num": "ZktCcDBZUDFxb1dJVnpsQ042a0pZa2ozcVc3NEkrd2Qvc0FIMU9qTGhlMlNBYUJYRkVCTEowZz0=",
+                        "token_pos": 2301237,
+                        "depth": 25601,
+                        "order": 25601,
+                        "flow_type": 25601,
+                        "scope": "SG9VcllnWk1xaDFsR1kwaS94dzJZaUZWQnEvRS92am04WFhhRFhjbkFkdExxZWUyZGVMd2dPWT0="
+                    }
+                ]
             }
         ],
-        "VAR3": [
+        "T0RFelltVm1OVEl5T1dNeE9XRmxOV1V6WldSbU1qUTJZVGs0WmpVNU0yVXdOVFUzTWpKbVpBPT0=": [
             {
-                "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 7,
-                "token_pos": 54,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss5.php"
+                "token_type": "Wkl2dktpd09jdzNLeGo4SzdxSWk4Qjl6OWNiak1leXNOck93TkxZNFhJeEsvem9aKzIxbG16QT0=",
+                "line_num": "MkduVllPekIxeGpxNXIwYWpRVlF5MU9FR1ZUTXJhM1FLQVlFNmdDck1rM0lEYUtXL1RjQ3Rqaz0=",
+                "token_pos": 6098057,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "SG9VcllnWk1xaDFsR1kwaS94dzJZaUZWQnEvRS92am04WFhhRFhjbkFkdExxZWUyZGVMd2dPWT0="
+            }
+        ]
+    },
+    "Wm1ZeFpXRTBPREZqTkRnM1ptSmtNelk0TTJJellqUTNOREF5TVdObE56TTFOamxqTURobFlnPT0=": {
+        "TmpZMlpqTTFNekUyTURrd1pqaGtPRFkwWVdRMlpUbGhOemRpTXpabE1HTXpNMlF5TmpSbVlRPT0=": [
+            {
+                "token_type": "RjFpcUh2bjBzTGR4RVM2eVEzL2tmUVRRVm1MbHFGNHhyMGlDbHVtL25wWnl1eXIxbDQ0WDNvYz0=",
+                "line_num": "a3VXYUtDYTZwazhXOUhzazVvYUtXWHJqVXQxTEpOMXRyd1VZcXc4QjloUnBIUWFsU29ITlNwYz0=",
+                "token_pos": 3897440,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "UW1OS2ZyVm56ZnVJa0hjNDV0MFRpT0xCRXlHVjFPQ3JwekNFcG8wSVlIcllXM0VxNVJWYUc5dz0="
             }
         ],
-        "VAR4": [
+        "WVRVM056STRaVGRrTW1NeFpUQmlOVE5pT0RneU1qTTBNRGcwTURGbU9HWXpaR1F3WmpnME1BPT0=": [
             {
-                "token_type": "CONSTANT_ENCAPSED_STRING",
-                "line_num": 9,
-                "token_pos": 73,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss5.php"
-            },
-            {
-                "token_type": "VAR2",
-                "line_num": 12,
-                "token_pos": 110,
-                "depth": 1,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss5.php"
-            },
-            {
-                "token_type": "VAR1",
-                "line_num": 12,
-                "token_pos": 115,
-                "depth": 2,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss5.php"
-            },
-            {
-                "token_type": "VAR3",
-                "line_num": 12,
-                "token_pos": 120,
-                "depth": 3,
-                "order": 1,
-                "flow_type": 1,
-                "scope": "xss5.php"
-            }
-        ],
-        "XSS_SENS": [
-            {
-                "token_type": "VAR4",
-                "line_num": 15,
-                "token_pos": 132,
-                "depth": 0,
-                "order": 0,
-                "flow_type": 0,
-                "scope": "xss5.php"
+                "token_type": "RjFpcUh2bjBzTGR4RVM2eVEzL2tmUVRRVm1MbHFGNHhyMGlDbHVtL25wWnl1eXIxbDQ0WDNvYz0=",
+                "line_num": "Ukt2M2ZuUDk0TDFmWXAxYlBQNVFiMkZtNjNMYmtpS1krdlpxZ3V4cFJjVGFEZmU1Y3lFeExmND0=",
+                "token_pos": 4854736,
+                "depth": 25601,
+                "order": 25601,
+                "flow_type": 25601,
+                "scope": "UW1OS2ZyVm56ZnVJa0hjNDV0MFRpT0xCRXlHVjFPQ3JwekNFcG8wSVlIcllXM0VxNVJWYUc5dz0="
             }
         ]
     }

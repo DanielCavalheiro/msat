@@ -4,7 +4,7 @@ import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken
 
 
-class Detector:
+class OldDetector:
     """Detector component that detects vulnerabilities"""
 
     def __init__(self, data_structure: dict, shared_password, encrypt_flag):
@@ -32,11 +32,8 @@ class Detector:
         # Detect data flows
         detected_paths = {}
         vul_query = self.special_tokens[self.vuln_type + "_SENS"]
-        vul_query = crypto_stuff.hmac_it(vul_query, self.shared_password)
         fun_query = self.special_tokens["FUNC_CALL"]
-        fun_query = crypto_stuff.hmac_it(fun_query, self.shared_password)
         args_query = self.special_tokens["ARGS"]
-        args_query = crypto_stuff.hmac_it(args_query, self.shared_password)
 
         for scope_key, scope_values in self.data_structure.items():
             if vul_query in scope_values:
@@ -48,25 +45,21 @@ class Detector:
                     if func_call in self.analysed_function_calls:
                         continue
                     self.analysed_function_calls.append(func_call)
-                    func_name_key = crypto_stuff.hmac_it(
-                        func_call.func_name, self.shared_password)
-                    if func_name_key not in self.data_structure:
+                    if func_call.func_name not in self.data_structure:
                         continue
-                    func_scope = self.data_structure[func_name_key].copy(
+                    func_scope = self.data_structure[func_call.func_name].copy(
                     )
                     call_args = func_call.arguments
                     for i, func_arg in enumerate(func_scope[args_query]):
                         call_arg = call_args[i]
                         arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
                                        func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
-                        func_arg_key = crypto_stuff.hmac_it(
-                            func_arg.token_type, self.shared_password)
                         func_arg_correlations = func_scope.get(
-                            func_arg_key, [])
+                            func_arg.token_type, [])
                         func_arg_correlations.append(arg)
-                        func_scope[func_arg_key] = func_arg_correlations
+                        func_scope[func_arg.token_type] = func_arg_correlations
                     self.__detect_paths_in_scope(
-                        func_name_key, func_scope, vul_query, detected_paths)
+                        func_call.func_name, func_scope, vul_query, detected_paths)
 
         # Check if there are any detected paths
         if all(len(paths) == 0 for paths in detected_paths.values()):
@@ -109,62 +102,52 @@ class Detector:
     def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token, previous_token):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
-        current_token_type_key = crypto_stuff.hmac_it(
-            current_token.token_type, self.shared_password)
 
         if current_token.token_type == self.special_tokens["FUNC_CALL"]:
             if current_token in self.analysed_function_calls:
                 return
             self.analysed_function_calls.append(current_token)
             previous_token = current_token
-            func_name_key = crypto_stuff.hmac_it(
-                current_token.func_name, self.shared_password)
-            if func_name_key not in self.data_structure:
+            if current_token.func_name not in self.data_structure:
                 return
-            func_scope = self.data_structure[func_name_key].copy()
+            func_scope = self.data_structure[current_token.func_name].copy()
             call_args = current_token.arguments
 
             # Add func call arguments to the scope
             query = self.special_tokens["ARGS"]
-            query = crypto_stuff.hmac_it(query, self.shared_password)
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
                 arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
                                func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
-                func_arg_key = crypto_stuff.hmac_it(
-                    func_arg.token_type, self.shared_password)
-                func_arg_correlations = func_scope.get(
-                    func_arg_key, [])
+                func_arg_correlations = func_scope.get(func_arg.token_type, [])
                 func_arg_correlations.append(arg)
-                func_scope[func_arg_key] = func_arg_correlations
+                func_scope[func_arg.token_type] = func_arg_correlations
 
             # Recursiveley find flows in the function scope
             query = self.special_tokens["RETURN"]
-            query = crypto_stuff.hmac_it(query, self.shared_password)
             for token in func_scope[query]:
                 visited.append(token)
                 self.__detect_flows(
-                    func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token, previous_token)
+                    current_token.func_name, func_scope, detected_paths_by_sink, current_path, visited, token, previous_token)
                 current_path.pop()
                 visited.remove(token)
 
-        elif current_token_type_key not in scope_values:
-            current_token_scope_key = crypto_stuff.hmac_it(
-                current_token.scope, self.shared_password)
+        # TODO should be up
+        elif current_token.token_type not in scope_values:
             # if the curremt token is a input then path must conclude imedialety
             if current_token.token_type == self.special_tokens["INPUT"]:
                 self.__conclude_path(current_path, detected_paths_by_sink)
             # if the current token scope is different to the current scope must find the token in the other scope
-            elif current_token_scope_key != scope_key:
+            elif current_token.scope != scope_key:
                 previous_token = current_token
-                scope_values = self.data_structure[current_token_scope_key]
+                scope_values = self.data_structure[current_token.scope]
                 # Todo repeated code
-                for token in scope_values[current_token_type_key]:
+                for token in scope_values[current_token.token_type]:
                     if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
                         previous_token = current_token
                         visited.append(token)
                         self.__detect_flows(
-                            current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
+                            current_token.scope, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
                         current_path.pop()
                         visited.remove(token)
             # Probably a string or something else unknwon and so the path must conclude
@@ -173,7 +156,7 @@ class Detector:
 
         else:
             previous_token = current_token
-            for token in scope_values[current_token_type_key]:
+            for token in scope_values[current_token.token_type]:
                 if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
                     visited.append(token)
                     self.__detect_flows(
@@ -261,3 +244,5 @@ class Detector:
                     break
 
         return result_paths
+
+    # todo SCOPE should be the name and not the whole scope

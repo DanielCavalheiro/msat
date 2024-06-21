@@ -6,15 +6,16 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.token_utils import AbsToken, token_decoder
-import utils.crypto_stuff as crypto_stuff
-from components.detector import Detector
-from components.encryptor import Encryptor
-from components.abstractor import Abstractor
+from tests.old_detector import OldDetector
 from components.correlator import Correlator
+from components.abstractor import Abstractor
+from components.encryptor import Encryptor
+from components.detector import Detector
+import utils.crypto_stuff as crypto_stuff
+from utils.token_utils import AbsToken, token_decoder
 
-FILE = "/home/dani/tese/hollingworth_app/xss5.php"
-ENCRYPT_FLAG = False
+FILE = "/home/dani/tese/hollingworth_app/xss6.php"
+ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
@@ -41,10 +42,17 @@ else:
         with open("encrypted_ds", "r", encoding="utf-8") as f:
             encrypted_ds = json.loads(
                 f.read(), object_hook=token_decoder)
-        detector = Detector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
+
+        detector = None
+        if ENCRYPT_FLAG:
+
+            detector = Detector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
+
+        else:
+            detector = OldDetector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
+
         detector.set_vuln_type(DETECTING)
         vulnerable_paths = detector.detect_vulnerability()
-
         special_tokens = crypto_stuff.populate_special_tokens(
             SHARED_PASSWORD)  # TODO change location
 

@@ -26,12 +26,17 @@ class Encryptor:
         encrypted_ds = {}  # Encrypted data structure
         for scope, values in data_structure.items():
             enc_scope = crypto_stuff.encrypt_sse(scope, secret_password)
+            enc_scope = crypto_stuff.hmac_it(enc_scope, shared_password)
             encrypted_ds[enc_scope] = {}
             for key, vs in values.items():
                 if key in SPECIAL_TOKENS:
                     enc_key = crypto_stuff.hmac_it(key, shared_password)
+                    # HMAC again so no trace can be seen in the resulting data
+                    enc_key = crypto_stuff.hmac_it(enc_key, shared_password)
                 else:
                     enc_key = crypto_stuff.encrypt_sse(key, secret_password)
+                    # HMAC again so no trace can be seen in the resulting data
+                    enc_key = crypto_stuff.hmac_it(enc_key, shared_password)
                 enc_assignors = []
                 for value in vs:
                     enc_assignors.append(
