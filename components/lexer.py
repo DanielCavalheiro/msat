@@ -46,7 +46,7 @@ filtered = (
     'COMMENT', 'DOC_COMMENT',
 
     # Delimiters
-    'COMMA',  'QUOTE',
+    'COMMA', 'QUOTE',
 
     # Escaping from HTML
     'INLINE_HTML',
@@ -80,14 +80,12 @@ tokens = reserved + filtered + (
     'VARIABLE',
 
     # Delimiters
-    'LPAREN', 'RPAREN',  'LBRACKET', 'RBRACKET',  'LBRACE', 'RBRACE', 'DOLLAR',
+    'LPAREN', 'RPAREN', 'LBRACKET', 'RBRACKET', 'LBRACE', 'RBRACE', 'DOLLAR',
     'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
 
     # Casts
     'ARRAY_CAST', 'BINARY_CAST', 'BOOL_CAST', 'DOUBLE_CAST', 'INT_CAST',
     'OBJECT_CAST', 'STRING_CAST', 'UNSET_CAST',
-
-
 
     # Identifiers and reserved words
     'DIR', 'FILE', 'LINE', 'FUNC_C', 'CLASS_C', 'METHOD_C', 'NS_C',
@@ -105,8 +103,12 @@ tokens = reserved + filtered + (
     'START_NOWDOC', 'END_NOWDOC',
 
     # Useful for analysis
-    'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF'
+    'INPUT', 'XSS_SENS', 'XSS_SANF', 'SQLI_SENS', 'SQLI_SANF',
+
+    # Import (require, include, require_once, include_once)
+    'IMPORT'
 )
+
 
 # Newlines
 
@@ -184,6 +186,7 @@ def t_php_COMMENT(t):
     r'/\*(.|\n)*?\*/ | //([^?%\n]|[?%](?!>))*\n? | \#([^?%\n]|[?%](?!>))*\n?'
     t.lexer.lineno += t.value.count("\n")
     return t
+
 
 # Operators
 
@@ -311,6 +314,11 @@ with open('../components/knowledge_source.yaml', encoding='utf-8') as file:
 
 for r in reserved:
     reserved_map[r] = r
+
+
+def t_php_IMPORT(t):
+    r'(include|require|include_once|require_once)\b'
+    return t
 
 
 # Identifier
