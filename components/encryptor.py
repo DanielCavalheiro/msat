@@ -1,16 +1,16 @@
 """Module for the Encryptor component"""
 
 import json
-from utils.token_utils import AbsToken, FuncCallToken, TokenEncoder
+from utils.token_utils import AbsToken, ScopeChangeToken, TokenEncoder
 import utils.crypto_stuff as crypto_stuff
 
 SPECIAL_TOKENS = ("INPUT", "XSS_SENS", "XSS_SANF",
                   "SQLI_SENS", "SQLI_SANF", "FUNC_CALL",
-                  "RETURN", "ARGS")
+                  "RETURN", "ARGS", "IMPORTS")
 
 
 class Encryptor:
-    """Encryptor component to encrypt data strcutur."""
+    """Encryptor component to encrypt data structure."""
 
     def __init__(self, encrypt_flag):
         self.encrypt_flag = encrypt_flag  # Flag to encrypt or not
@@ -66,7 +66,7 @@ class Encryptor:
         scope = crypto_stuff.encrypt_sse(
             token.scope, secret_password)
 
-        if isinstance(token, FuncCallToken):
+        if isinstance(token, ScopeChangeToken):
             token_type = crypto_stuff.hmac_it(
                 token.token_type, shared_password)
 
@@ -78,7 +78,7 @@ class Encryptor:
                 enc_args.append(self.__encrypt_token(
                     arg, secret_password, shared_password))
 
-            return FuncCallToken(token_type, line_num, position, depth, order, flow_type, scope, func_name, enc_args)
+            return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, scope, func_name, enc_args)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:

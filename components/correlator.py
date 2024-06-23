@@ -1,8 +1,7 @@
 """Module for the Correlator component"""
 
 from components.abstractor import Abstractor
-from utils.token_utils import AbsToken, FuncCallToken
-from utils.scope_details import ScopeDetails
+from utils.token_utils import AbsToken, ScopeChangeToken
 
 
 class Correlator:
@@ -88,12 +87,16 @@ class Correlator:
                 arguments = self.__handle_func_call()
                 func_calls = self.data_structure[self.current_scope].get("FUNC_CALL", [])
                 func_calls.append(
-                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                  self.order, self.flow_type, self.current_scope, func_name, arguments))
+                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
                 self.data_structure[self.current_scope]["FUNC_CALL"] = func_calls
 
             elif token_type == "RETURN":
                 self.__handle_correlation(self.current_token)
+
+            # ----------------------------- Handle Imports ------------------------------- #
+            elif token_type == "IMPORT":
+                self.__handle_import()
 
             # ---------------------- Handle possible vulnerabilities --------------------- #
             elif token_type == "INPUT":
@@ -130,8 +133,8 @@ class Correlator:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
                 assignors.append(
-                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                  self.order, self.flow_type, self.current_scope, func_name, arguments))
+                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -188,8 +191,8 @@ class Correlator:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
                 assignors.append(
-                    FuncCallToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                  self.order, self.flow_type, self.current_scope, func_name, arguments))
+                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -268,7 +271,18 @@ class Correlator:
 
         return arguments
 
-    # ------------------------------ vunerabilities ------------------------------ #
+    # ------------------------------ Imports ------------------------------------- #
+    def __handle_import(self):
+        """Handle import statements (require/include)."""
+        current_token = self.abstractor.token()
+        while current_token and current_token.type != "SEMI":
+            if current_token.type in ("CONSTANT_ENCAPSED_STRING", "ENCAPSED_AND_WHITESPACE"):
+                token = ScopeChangeToken("IMPORT", current_token.lineno, current_token.lexpos, self.depth, self.order,
+                                         self.flow_type, self.current_scope, current_token.value, [])
+                self.data_structure[self.current_scope].setdefault("IMPORTS", []).append(token)
+            current_token = self.abstractor.token()
+
+    # ------------------------------ vulnerabilities ------------------------------ #
 
     def __handle_sqli_sens(self):
         """Handle SQL Injection sensitive operations."""

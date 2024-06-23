@@ -1,7 +1,6 @@
 """Abstract token class to represent tokens after abstraction and correlation."""
 
 import json
-from . import crypto_stuff
 
 
 class AbsToken:
@@ -26,7 +25,7 @@ class AbsToken:
         return hash(self.__str__())
 
 
-class FuncCallToken(AbsToken):
+class ScopeChangeToken(AbsToken):
     """Token to represent function call"""
 
     def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, func_name, arguments):
@@ -35,13 +34,13 @@ class FuncCallToken(AbsToken):
         self.arguments = arguments
 
     def __str__(self):
-        return f"FuncCallToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)})"
+        return f"ScopeChangeToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)})"
 
 
 class TokenEncoder(json.JSONEncoder):
     """JSON encoder for EncToken class."""
     def default(self, o):
-        if isinstance(o, AbsToken) or isinstance(o, FuncCallToken):
+        if isinstance(o, AbsToken) or isinstance(o, ScopeChangeToken):
             return o.__dict__
         return json.JSONEncoder.default(self, o)
 
@@ -49,7 +48,7 @@ class TokenEncoder(json.JSONEncoder):
 def token_decoder(dct):
     """JSON decoder for EncToken class."""
     if "func_name" in dct:
-        return FuncCallToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"])
+        return ScopeChangeToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"])
     if "token_type" in dct:
         return AbsToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
     return dct

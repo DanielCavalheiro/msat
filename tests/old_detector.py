@@ -150,7 +150,7 @@ class OldDetector:
                             current_token.scope, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
                         current_path.pop()
                         visited.remove(token)
-            # Probably a string or something else unknwon and so the path must conclude
+            # Probably a string or something else unknown and so the path must conclude
             else:
                 self.__conclude_path(current_path, detected_paths_by_sink)
 

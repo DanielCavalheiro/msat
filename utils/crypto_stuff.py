@@ -100,5 +100,6 @@ def populate_special_tokens(shared_password):
         "SQLI_SANF": hmac_it("SQLI_SANF", shared_password),
         "FUNC_CALL": hmac_it("FUNC_CALL", shared_password),
         "RETURN": hmac_it("RETURN", shared_password),
-        "ARGS": hmac_it("ARGS", shared_password)
+        "ARGS": hmac_it("ARGS", shared_password),
+        "IMPORTS": hmac_it("IMPORTS", shared_password),
     }

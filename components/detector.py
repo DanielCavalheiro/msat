@@ -17,7 +17,7 @@ class Detector:
             self.special_tokens = {"INPUT": "INPUT", "XSS_SENS": "XSS_SENS",
                                    "XSS_SANF": "XSS_SANF", "SQLI_SENS": "SQLI_SENS",
                                    "SQLI_SANF": "SQLI_SANF", "FUNC_CALL": "FUNC_CALL",
-                                   "RETURN": "RETURN", "ARGS": "ARGS"}
+                                   "RETURN": "RETURN", "ARGS": "ARGS", "IMPORTS": "IMPORTS"}
         self.vuln_type = None
 
         self.analysed_function_calls = []
@@ -138,7 +138,7 @@ class Detector:
                 func_arg_correlations.append(arg)
                 func_scope[func_arg_key] = func_arg_correlations
 
-            # Recursiveley find flows in the function scope
+            # Recursively find flows in the function scope
             query = self.special_tokens["RETURN"]
             query = crypto_stuff.hmac_it(query, self.shared_password)
             for token in func_scope[query]:
@@ -167,9 +167,14 @@ class Detector:
                             current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
                         current_path.pop()
                         visited.remove(token)
-            # Probably a string or something else unknwon and so the path must conclude
             else:
-                self.__conclude_path(current_path, detected_paths_by_sink)
+                import_query = crypto_stuff.hmac_it(self.special_tokens["IMPORTS"], self.shared_password)
+                imports = scope_values.get(import_query, [])
+                imports.sort(key=lambda x: x.token_pos, reverse=True)
+                if imports:
+                    print(f"Imported scopes: {imports}")
+                else:
+                    self.__conclude_path(current_path, detected_paths_by_sink)
 
         else:
             previous_token = current_token

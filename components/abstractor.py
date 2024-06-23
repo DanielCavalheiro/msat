@@ -7,10 +7,10 @@ import components.lexer as token_rules
 class Abstractor:
     """Abstractor component class to abstract tokens from the lexer."""
 
-    def __init__(self, file_name):
+    def __init__(self):
 
         # File being abstracted
-        self.file_name = file_name
+        self.file_name = None
 
         # Lexer setup
         self.lexer = lex(module=token_rules)

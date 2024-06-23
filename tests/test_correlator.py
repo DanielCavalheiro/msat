@@ -1,32 +1,27 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-from components.correlator import Correlator
 from components.abstractor import Abstractor
+from components.correlator import Correlator
 
+DIR = "/home/dani/tese/hollingworth_app/testing_dir"
+data_structure = {}
+for root, dirs, files in os.walk(DIR):
+    for file in files:
+        if file.endswith('.php'):
+            php_file = os.path.join(root, file)
+            data = open(php_file, "r", encoding="utf-8")
+            with data:
+                lexer = Abstractor()
+                scope = os.path.basename(php_file)
+                lexer.file_name = scope
+                lexer.input(data.read())
 
-FILE = "/home/dani/tese/hollingworth_app/xss5.php"
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
+                correlator.correlate()
 
-try:
-    data = open(FILE, "r", encoding="utf-8")
-except FileNotFoundError:
-    print("File not found")
-else:
-    with data:
-        scope = os.path.basename(FILE)
-        lexer = Abstractor(scope)
-        lexer.input(data.read())
-
-        scope = os.path.basename(FILE)
-        correlator = Correlator(lexer, {}, 0, 0, scope, {})
-        correlator.correlate()
-
-        data_structure = correlator.data_structure
-
-        for scope, values in data_structure.items():
-            print(scope)
-            for k, vs in values.items():
-                print("\t" + k)
-                for v in vs:
-                    print("\t\t - " + str(v))
+for scope, values in data_structure.items():
+    print(scope)
+    for k, vs in values.items():
+        print("\t" + k)
+        for v in vs:
+            print("\t\t - " + str(v))

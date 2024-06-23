@@ -1,22 +1,18 @@
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-
 from components.abstractor import Abstractor
 
-FILE = "/home/dani/tese/hollingworth_app/xss7.php"
+DIR = "/home/dani/tese/hollingworth_app/testing_dir"
+php_files = []
+for root, dirs, files in os.walk(DIR):
+    for file in files:
+        if file.endswith('.php'):
+            php_files.append(os.path.join(root, file))
 
-try:
-    data = open(FILE, "r", encoding="utf-8")
-except FileNotFoundError:
-    print("File not found")
-else:
-    with data:
-        
-        scope = os.path.basename(FILE)
-        lexer = Abstractor(scope)
+for file in php_files:
+    with open(file, "r", encoding="utf-8") as data:
+        lexer = Abstractor()
+        lexer.file_name = os.path.basename(file)
         lexer.input(data.read())
 
         while True:
