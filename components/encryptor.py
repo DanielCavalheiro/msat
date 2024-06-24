@@ -71,7 +71,7 @@ class Encryptor:
                 token.token_type, shared_password)
 
             func_name = crypto_stuff.encrypt_sse(
-                token.func_name, secret_password)
+                token.scope_name, secret_password)
 
             enc_args = []
             for arg in token.arguments:

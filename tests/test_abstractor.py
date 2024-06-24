@@ -9,9 +9,9 @@ for root, dirs, files in os.walk(DIR):
         if file.endswith('.php'):
             php_files.append(os.path.join(root, file))
 
+lexer = Abstractor()
 for file in php_files:
     with open(file, "r", encoding="utf-8") as data:
-        lexer = Abstractor()
         lexer.file_name = os.path.basename(file)
         lexer.input(data.read())
 

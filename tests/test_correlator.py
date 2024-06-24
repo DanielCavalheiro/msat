@@ -5,13 +5,13 @@ from components.correlator import Correlator
 
 DIR = "/home/dani/tese/hollingworth_app/testing_dir"
 data_structure = {}
+lexer = Abstractor()
 for root, dirs, files in os.walk(DIR):
     for file in files:
         if file.endswith('.php'):
             php_file = os.path.join(root, file)
             data = open(php_file, "r", encoding="utf-8")
             with data:
-                lexer = Abstractor()
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
                 lexer.input(data.read())

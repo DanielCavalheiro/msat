@@ -28,13 +28,13 @@ class AbsToken:
 class ScopeChangeToken(AbsToken):
     """Token to represent function call"""
 
-    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, func_name, arguments):
+    def __init__(self, token_type, line_num, lexpos, depth, order, flow_type, scope, scope_name, arguments):
         super().__init__(token_type, line_num, lexpos, depth, order, flow_type, scope)
-        self.func_name = func_name
+        self.scope_name = scope_name
         self.arguments = arguments
 
     def __str__(self):
-        return f"ScopeChangeToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.func_name}, {str(self.arguments)})"
+        return f"ScopeChangeToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.scope_name}, {str(self.arguments)})"
 
 
 class TokenEncoder(json.JSONEncoder):
@@ -47,8 +47,8 @@ class TokenEncoder(json.JSONEncoder):
 
 def token_decoder(dct):
     """JSON decoder for EncToken class."""
-    if "func_name" in dct:
-        return ScopeChangeToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["func_name"], dct["arguments"])
+    if "scope_name" in dct:
+        return ScopeChangeToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"], dct["scope_name"], dct["arguments"])
     if "token_type" in dct:
         return AbsToken(dct["token_type"], dct["line_num"], dct["token_pos"], dct["depth"], dct["order"], dct["flow_type"], dct["scope"])
     return dct

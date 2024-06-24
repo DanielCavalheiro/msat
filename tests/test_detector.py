@@ -14,19 +14,19 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-ENCRYPT_FLAG = True
+ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
-DIR = "/home/dani/tese/hollingworth_app/testing_dir"
+DIR = "/home/dani/tese/hollingworth_app"
 
 data_structure = {}
+lexer = Abstractor()
 for root, dirs, files in os.walk(DIR):
     for file in files:
         if file.endswith('.php'):
             php_file = os.path.join(root, file)
             with open(php_file, "r", encoding="utf-8") as data:
-                lexer = Abstractor()
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
                 lexer.input(data.read())
@@ -37,16 +37,16 @@ for root, dirs, files in os.walk(DIR):
 encryptor = Encryptor(ENCRYPT_FLAG)
 encryptor.encrypt_data_structure(correlator.data_structure, SECRET_PASSWORD, SHARED_PASSWORD)
 
-encrypted_ds = {}
 with open("../encrypted_ds", "r", encoding="utf-8") as f:
-    decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
-    encrypted_ds = json.loads(decrypted_data, object_hook=token_decoder)
 
     detector = None
     if ENCRYPT_FLAG:
+        decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
+        encrypted_ds = json.loads(decrypted_data, object_hook=token_decoder)
         detector = Detector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
     else:
-        detector = OldDetector(encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
+        not_encrypted_ds = json.loads(f.read(), object_hook=token_decoder)
+        detector = OldDetector(not_encrypted_ds, SHARED_PASSWORD, ENCRYPT_FLAG)
 
     detector.set_vuln_type(DETECTING)
     vulnerable_paths = detector.detect_vulnerability()

@@ -49,7 +49,7 @@ class Detector:
                         continue
                     self.analysed_function_calls.append(func_call)
                     func_name_key = crypto_stuff.hmac_it(
-                        func_call.func_name, self.shared_password)
+                        func_call.scope_name, self.shared_password)
                     if func_name_key not in self.data_structure:
                         continue
                     func_scope = self.data_structure[func_name_key].copy(
@@ -118,7 +118,7 @@ class Detector:
             self.analysed_function_calls.append(current_token)
             previous_token = current_token
             func_name_key = crypto_stuff.hmac_it(
-                current_token.func_name, self.shared_password)
+                current_token.scope_name, self.shared_password)
             if func_name_key not in self.data_structure:
                 return
             func_scope = self.data_structure[func_name_key].copy()
@@ -172,7 +172,27 @@ class Detector:
                 imports = scope_values.get(import_query, [])
                 imports.sort(key=lambda x: x.token_pos, reverse=True)
                 if imports:
-                    print(f"Imported scopes: {imports}")
+                    found_in_import = False
+                    for import_token in imports:
+                        import_scope_key = crypto_stuff.hmac_it(import_token.scope_name, self.shared_password)
+                        if import_scope_key not in self.data_structure:
+                            continue
+                        import_scope = self.data_structure[import_scope_key]
+                        if current_token_type_key not in import_scope:
+                            continue
+                        found_in_import = True
+                        previous_token = current_token
+                        for token in import_scope[current_token_type_key]:
+                            visited.append(token)
+                            self.__detect_flows(
+                                import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token,
+                                previous_token)
+                            current_path.pop()
+                            visited.remove(token)
+                        break
+                    if not found_in_import:
+                        self.__conclude_path(current_path, detected_paths_by_sink)
+
                 else:
                     self.__conclude_path(current_path, detected_paths_by_sink)
 
