@@ -14,6 +14,7 @@ for file in php_files:
     with open(file, "r", encoding="utf-8") as data:
         lexer.file_name = os.path.basename(file)
         lexer.input(data.read())
+        lexer.lineno = 1
 
         while True:
             token = lexer.token()

@@ -15,6 +15,7 @@ for root, dirs, files in os.walk(DIR):
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
                 lexer.input(data.read())
+                lexer.lineno = 1
 
                 correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()

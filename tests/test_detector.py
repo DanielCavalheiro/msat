@@ -14,7 +14,7 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
@@ -30,6 +30,7 @@ for root, dirs, files in os.walk(DIR):
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
                 lexer.input(data.read())
+                lexer.lineno = 1
 
                 correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()

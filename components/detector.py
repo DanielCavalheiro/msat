@@ -185,8 +185,7 @@ class Detector:
                         for token in import_scope[current_token_type_key]:
                             visited.append(token)
                             self.__detect_flows(
-                                import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token,
-                                previous_token)
+                                import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token, previous_token)
                             current_path.pop()
                             visited.remove(token)
                         break
