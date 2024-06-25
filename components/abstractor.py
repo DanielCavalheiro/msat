@@ -129,11 +129,11 @@ class Abstractor:
 
         match t.type:
             case "VARIABLE":
-                if self.code_block:
-                    for i in reversed(self.code_block):
-                        if i[1] == 0:
-                            t.value = i[2] + ":" + t.value
-                            break
+                # if self.code_block:
+                #     for i in reversed(self.code_block):
+                #         if i[1] == 0:
+                #             t.value = i[2] + ":" + t.value
+                #             break
                 if t.value in self.var_abstractor:
                     t.type = self.var_abstractor[t.value]
                 else:

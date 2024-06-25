@@ -17,7 +17,7 @@ from utils.token_utils import AbsToken, token_decoder
 ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
-DETECTING = "XSS"
+DETECTING = "SQLI"
 DIR = "/home/dani/tese/hollingworth_app"
 
 data_structure = {}

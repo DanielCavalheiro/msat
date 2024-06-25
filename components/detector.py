@@ -65,8 +65,10 @@ class Detector:
                             func_arg_key, [])
                         func_arg_correlations.append(arg)
                         func_scope[func_arg_key] = func_arg_correlations
-                    self.__detect_paths_in_scope(
-                        func_name_key, func_scope, vul_query, detected_paths)
+
+                    if vul_query in func_scope:
+                        self.__detect_paths_in_scope(
+                            func_name_key, func_scope, vul_query, detected_paths)
 
         # Check if there are any detected paths
         if all(len(paths) == 0 for paths in detected_paths.values()):
@@ -88,6 +90,13 @@ class Detector:
     #                              Auxiliar functions                              #
     # ---------------------------------------------------------------------------- #
 
+    def __get_imports(self, scope_values):
+        """Get the imports in a given scope"""
+        import_query = crypto_stuff.hmac_it(self.special_tokens["IMPORTS"], self.shared_password)
+        imports = scope_values.get(import_query, [])
+        imports.sort(key=lambda x: x.token_pos, reverse=True)
+        return imports
+
     def __detect_paths_in_scope(self, scope_key, scope_values, query, detected_paths):
         """Detects paths in a given scope"""
 
@@ -96,9 +105,8 @@ class Detector:
             current_path = []
             visited = []
             visited.append(token)
-            previous_pos = None
-            self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path,
-                                visited, token, previous_pos)
+            imports = self.__get_imports(scope_values)
+            self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
 
             paths = detected_paths.get(token, [])
             for path in detected_paths_by_sink:
@@ -106,7 +114,7 @@ class Detector:
             if len(paths) > 0:
                 detected_paths[token] = paths
 
-    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token, previous_token):
+    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token, imports):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
         current_token_type_key = crypto_stuff.hmac_it(
@@ -116,7 +124,6 @@ class Detector:
             if current_token in self.analysed_function_calls:
                 return
             self.analysed_function_calls.append(current_token)
-            previous_token = current_token
             func_name_key = crypto_stuff.hmac_it(
                 current_token.scope_name, self.shared_password)
             if func_name_key not in self.data_structure:
@@ -141,39 +148,59 @@ class Detector:
             # Recursively find flows in the function scope
             query = self.special_tokens["RETURN"]
             query = crypto_stuff.hmac_it(query, self.shared_password)
+            imports = self.__get_imports(func_scope)
             for token in func_scope[query]:
                 visited.append(token)
-                self.__detect_flows(
-                    func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token, previous_token)
+                self.__detect_flows( func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token, imports)
                 current_path.pop()
                 visited.remove(token)
 
         elif current_token_type_key not in scope_values:
             current_token_scope_key = crypto_stuff.hmac_it(
                 current_token.scope, self.shared_password)
-            # if the curremt token is a input then path must conclude imedialety
+            # if the current token is an input then path must conclude immediate
             if current_token.token_type == self.special_tokens["INPUT"]:
                 self.__conclude_path(current_path, detected_paths_by_sink)
             # if the current token scope is different to the current scope must find the token in the other scope
             elif current_token_scope_key != scope_key:
-                previous_token = current_token
                 scope_values = self.data_structure[current_token_scope_key]
-                # Todo repeated code
+                imports = self.__get_imports(scope_values)
                 for token in scope_values[current_token_type_key]:
-                    if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
-                        previous_token = current_token
+                    if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                         visited.append(token)
-                        self.__detect_flows(
-                            current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
+                        found_in_import = False
+                        for import_token in imports:
+                            if token.token_pos < import_token.token_pos < current_token.token_pos:
+                                import_scope_key = crypto_stuff.hmac_it(import_token.scope_name, self.shared_password)
+                                if import_scope_key not in self.data_structure:
+                                    continue
+                                import_scope = self.data_structure[import_scope_key]
+                                if current_token_type_key not in import_scope:
+                                    continue
+                                found_in_import = True
+
+                                imports = self.__get_imports(import_scope)
+                                for token in import_scope[current_token_type_key]:
+                                    if token not in visited and ( not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                                        visited.append(token)
+                                        self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink,
+                                                            current_path,
+                                                            visited, token, imports)
+                                        current_path.pop()
+                                        visited.remove(token)
+                            if found_in_import:
+                                break
+                        if found_in_import:
+                            continue
+                        self.__detect_flows(current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
                         current_path.pop()
                         visited.remove(token)
             else:
-                import_query = crypto_stuff.hmac_it(self.special_tokens["IMPORTS"], self.shared_password)
-                imports = scope_values.get(import_query, [])
-                imports.sort(key=lambda x: x.token_pos, reverse=True)
                 if imports:
                     found_in_import = False
                     for import_token in imports:
+                        if import_token.token_pos > current_token.token_pos:
+                            continue
                         import_scope_key = crypto_stuff.hmac_it(import_token.scope_name, self.shared_password)
                         if import_scope_key not in self.data_structure:
                             continue
@@ -181,11 +208,10 @@ class Detector:
                         if current_token_type_key not in import_scope:
                             continue
                         found_in_import = True
-                        previous_token = current_token
+                        imports = self.__get_imports(import_scope)
                         for token in import_scope[current_token_type_key]:
                             visited.append(token)
-                            self.__detect_flows(
-                                import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token, previous_token)
+                            self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token, imports)
                             current_path.pop()
                             visited.remove(token)
                         break
@@ -196,12 +222,35 @@ class Detector:
                     self.__conclude_path(current_path, detected_paths_by_sink)
 
         else:
-            previous_token = current_token
             for token in scope_values[current_token_type_key]:
-                if token not in visited and (not previous_token or previous_token.scope != token.scope or previous_token.token_pos > token.token_pos):
+                if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                     visited.append(token)
-                    self.__detect_flows(
-                        scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, previous_token)
+                    found_in_import = False
+                    for import_token in imports:
+                        if token.token_pos < import_token.token_pos < current_token.token_pos:
+                            import_scope_key = crypto_stuff.hmac_it(import_token.scope_name, self.shared_password)
+                            if import_scope_key not in self.data_structure:
+                                continue
+                            import_scope = self.data_structure[import_scope_key]
+                            if current_token_type_key not in import_scope:
+                                continue
+                            found_in_import = True
+
+                            imports = self.__get_imports(import_scope)
+                            for token in import_scope[current_token_type_key]:
+                                if token not in visited and (
+                                        not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                                    visited.append(token)
+                                    self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink,
+                                                        current_path,
+                                                        visited, token, imports)
+                                    current_path.pop()
+                                    visited.remove(token)
+                        if found_in_import:
+                            break
+                    if found_in_import:
+                        continue
+                    self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
                     current_path.pop()
                     visited.remove(token)
 
