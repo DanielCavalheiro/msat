@@ -7,7 +7,8 @@ from utils.token_utils import AbsToken, ScopeChangeToken
 class Correlator:
     """Correlator component class to correlate abstracted tokens."""
 
-    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes):
+    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes,
+                 spliter_count):
         self.abstractor = abstractor
         self.data_structure = data_structure
         self.depth = depth
@@ -17,6 +18,7 @@ class Correlator:
         self.current_token = None
         self.last_token = None
         self.next_depth_correlator = None
+        self.spliter_count = spliter_count
 
         self.current_scope = current_scope
         if current_scope not in self.data_structure:
@@ -123,6 +125,10 @@ class Correlator:
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
+            elif self.current_token.token_type == "QUOTE":
+                self.control_flow_counter += 1
+                self.__handle_encapsed_string(assignors, self.order, 1)
+
             elif "CONCAT" == self.current_token.token_type:
                 # Handle concatenation as if it was a control flow
                 self.control_flow_counter += 1
@@ -152,6 +158,22 @@ class Correlator:
 
             self.current_token = self.__next_token()
 
+    def quote_correlate(self, assignors):
+        if self.current_token and self.current_token.token_type != "QUOTE":
+
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                assignors.append(self.current_token)
+
+            elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                    self.current_token = self.__next_token()
+
+            self.current_token = self.__next_token()
+            self.control_flow_counter += 1
+            self.__handle_encapsed_string(assignors, self.control_flow_counter, 1)
+
     # ---------------------------------------------------------------------------- #
     #                              Auxiliary functions                             #
     # ---------------------------------------------------------------------------- #
@@ -166,7 +188,7 @@ class Correlator:
     def __correlate_next_depth(self, order: int, flow_type: int):
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes)
+                                                    self.current_scope, self.scopes, self.spliter_count)
         self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
 
@@ -183,9 +205,43 @@ class Correlator:
 
             elif "CONCAT" == self.current_token.token_type:
                 # Handle concatenation as if it was a control flow
+                previous_concat_token = assignors.pop()
+                self.spliter_count += 1
+                spliter = AbsToken(f"spliter{self.spliter_count}", None,
+                                   None, self.depth, self.order, self.flow_type,
+                                   self.current_scope)
+                assignors.append(spliter)
+                self.data_structure[self.current_scope][assignee_name] = assignors
+                assignee_name = spliter.token_type
+                self.control_flow_counter += 1
+                if not self.next_depth_correlator:
+                    self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, 1,
+                                                            self.current_scope, self.scopes, self.spliter_count)
+                self.next_depth_correlator.update(self.control_flow_counter, 1, self.current_token, self.last_token)
+                previous_concat_token.depth = self.next_depth_correlator.depth
+                previous_concat_token.order = self.next_depth_correlator.order
+                previous_concat_token.flow_type = self.next_depth_correlator.flow_type
+                assignors = [previous_concat_token]
                 self.control_flow_counter += 1
                 self.__handle_concat(assignors, self.control_flow_counter, 1)
+                spliter.line_num = self.abstractor.lineno
+                spliter.token_pos = self.abstractor.lexpos
                 break
+
+            elif self.current_token.token_type == "QUOTE":
+                self.current_token = self.__next_token()
+                self.spliter_count += 1
+                spliter = AbsToken(f"spliter{self.spliter_count}", None,
+                                   None, self.depth, self.order, self.flow_type,
+                                   self.current_scope)
+                assignors.append(spliter)
+                self.data_structure[self.current_scope][assignee_name] = assignors
+                assignee_name = spliter.token_type
+                assignors = []
+                self.control_flow_counter += 1
+                self.__handle_encapsed_string(assignors, self.control_flow_counter, 1)
+                spliter.line_num = self.abstractor.lineno
+                spliter.token_pos = self.abstractor.lexpos
 
             elif ("FUNC_CALL" in self.current_token.token_type):
                 func_name = self.current_token.token_type.split(":", 1)[1]
@@ -216,9 +272,16 @@ class Correlator:
     def __handle_concat(self, assignors, order: int, flow_type: int):
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes)
+                                                    self.current_scope, self.scopes, self.spliter_count)
         self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.concat_correlate(assignors)
+
+    def __handle_encapsed_string(self, assignors, order, flow_type):
+        if not self.next_depth_correlator:
+            self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
+                                                    self.current_scope, self.scopes, self.spliter_count)
+        self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
+        self.next_depth_correlator.quote_correlate(assignors)
 
     # --------------------------------- functions -------------------------------- #
 
@@ -234,7 +297,8 @@ class Correlator:
                 self.scopes[scope_name].append(self.current_token)
             self.current_token = self.__next_token()
 
-        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
+        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes,
+                                     self.spliter_count)
         func_correlator.correlate()
 
     def __handle_func_call(self):

@@ -263,8 +263,10 @@ class Detector:
                     if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
                         if path[i].token_pos < current_path[i].token_pos:
                             paths_to_remove.append(path)
+                            break
                         else:
                             paths_to_remove.append(current_path)
+                            break
                     else:
                         break
         detected_paths_by_sink.append(current_path.copy())

@@ -60,6 +60,7 @@ class OldDetector:
                             func_arg_key, [])
                         func_arg_correlations.append(arg)
                         func_scope[func_arg_key] = func_arg_correlations
+
                     if vul_query in func_scope:
                         self.__detect_paths_in_scope(
                             func_name_key, func_scope, vul_query, detected_paths)
@@ -189,7 +190,7 @@ class OldDetector:
                     for import_token in imports:
                         if import_token.token_pos > current_token.token_pos:
                             continue
-                        import_scope_key = import_token
+                        import_scope_key = import_token.scope_name
                         if import_scope_key not in self.data_structure:
                             continue
                         import_scope = self.data_structure[import_scope_key]
@@ -251,8 +252,10 @@ class OldDetector:
                     if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
                         if path[i].token_pos < current_path[i].token_pos:
                             paths_to_remove.append(path)
+                            break
                         else:
                             paths_to_remove.append(current_path)
+                            break
                     else:
                         break
         detected_paths_by_sink.append(current_path.copy())

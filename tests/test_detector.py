@@ -14,11 +14,11 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-ENCRYPT_FLAG = True
+ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "SQLI"
-DIR = "/home/dani/tese/hollingworth_app"
+DIR = "/home/dani/tese/hollingworth_app/testing_dir"
 
 data_structure = {}
 lexer = Abstractor()
@@ -32,7 +32,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.input(data.read())
                 lexer.lineno = 1
 
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, 0)
                 correlator.correlate()
 
 encryptor = Encryptor(ENCRYPT_FLAG)
