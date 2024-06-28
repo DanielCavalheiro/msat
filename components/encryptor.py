@@ -63,6 +63,8 @@ class Encryptor:
             token.order, secret_password)
         flow_type = crypto_stuff.encrypt_ope(
             token.flow_type, secret_password)
+        split = crypto_stuff.encrypt_sse(
+            str(token.split), secret_password)
         scope = crypto_stuff.encrypt_sse(
             token.scope, secret_password)
 
@@ -78,7 +80,8 @@ class Encryptor:
                 enc_args.append(self.__encrypt_token(
                     arg, secret_password, shared_password))
 
-            return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, scope, func_name, enc_args)
+            return ScopeChangeToken(token_type, line_num, position, depth, order, split, flow_type, scope, func_name,
+                                    enc_args)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:
@@ -88,4 +91,4 @@ class Encryptor:
                 token_type = crypto_stuff.encrypt_sse(
                     token.token_type, secret_password)
 
-            return AbsToken(token_type, line_num, position, depth, order, flow_type, scope)
+            return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)

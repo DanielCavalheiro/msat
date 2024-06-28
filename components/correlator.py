@@ -7,8 +7,7 @@ from utils.token_utils import AbsToken, ScopeChangeToken
 class Correlator:
     """Correlator component class to correlate abstracted tokens."""
 
-    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes,
-                 spliter_count):
+    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes):
         self.abstractor = abstractor
         self.data_structure = data_structure
         self.depth = depth
@@ -18,7 +17,7 @@ class Correlator:
         self.current_token = None
         self.last_token = None
         self.next_depth_correlator = None
-        self.spliter_count = spliter_count
+        self.split_counter = 0
 
         self.current_scope = current_scope
         if current_scope not in self.data_structure:
@@ -81,7 +80,7 @@ class Correlator:
 
             # ----------------------------- Handle functions ----------------------------- #
             elif token_type == "FUNCTION":
-                self.__handle_func_defenition()
+                self.__handle_func_definition()
 
             elif "FUNC_CALL" in token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
@@ -90,7 +89,7 @@ class Correlator:
                 func_calls = self.data_structure[self.current_scope].get("FUNC_CALL", [])
                 func_calls.append(
                     ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
                 self.data_structure[self.current_scope]["FUNC_CALL"] = func_calls
 
             elif token_type == "RETURN":
@@ -105,7 +104,7 @@ class Correlator:
                 pass
             # XSS
             elif token_type == "XSS_SENS":
-                self.__handle_correlation(self.current_token)
+                self.__handle_xss_sens(self.current_token)
             elif token_type == "XSS_SANF":
                 pass  # TODO: mysqli_stmt_bind_param
             # SQLI
@@ -116,64 +115,6 @@ class Correlator:
 
             self.last_token = self.current_token
 
-    def concat_correlate(self, assignors):
-        """Correlate the concatenation operation."""
-        self.current_token = self.__next_token()
-        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
-
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
-                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
-                assignors.append(self.current_token)
-
-            elif self.current_token.token_type == "QUOTE":
-                self.control_flow_counter += 1
-                self.__handle_encapsed_string(assignors, self.order, 1)
-
-            elif "CONCAT" == self.current_token.token_type:
-                # Handle concatenation as if it was a control flow
-                self.control_flow_counter += 1
-                self.__handle_concat(assignors, self.control_flow_counter, 1)
-                break
-
-            elif ("FUNC_CALL" in self.current_token.token_type):
-                func_name = self.current_token.token_type.split(":", 1)[1]
-                arguments = self.__handle_func_call()
-                assignors.append(
-                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
-
-            elif self.current_token.token_type == "INPUT":
-                assignors.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
-                    self.current_token = self.__next_token()
-
-            elif "_SANF" in self.current_token.token_type:
-                assignors.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
-                    self.current_token = self.__next_token()
-
-            elif "SQLI_SENS" == self.current_token.token_type:
-                assignors.append(self.current_token)
-                self.__handle_sqli_sens()
-
-            self.current_token = self.__next_token()
-
-    def quote_correlate(self, assignors):
-        if self.current_token and self.current_token.token_type != "QUOTE":
-
-            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
-                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
-                assignors.append(self.current_token)
-
-            elif self.current_token.token_type == "INPUT":
-                assignors.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
-                    self.current_token = self.__next_token()
-
-            self.current_token = self.__next_token()
-            self.control_flow_counter += 1
-            self.__handle_encapsed_string(assignors, self.control_flow_counter, 1)
-
     # ---------------------------------------------------------------------------- #
     #                              Auxiliary functions                             #
     # ---------------------------------------------------------------------------- #
@@ -183,12 +124,12 @@ class Correlator:
         t = self.abstractor.token()
         if not t:
             return None
-        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type, self.current_scope)
+        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type, 0, self.current_scope)
 
     def __correlate_next_depth(self, order: int, flow_type: int):
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes, self.spliter_count)
+                                                    self.current_scope, self.scopes)
         self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
 
@@ -203,61 +144,33 @@ class Correlator:
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
-            elif "CONCAT" == self.current_token.token_type:
+            elif self.current_token.token_type == "CONCAT":
                 # Handle concatenation as if it was a control flow
-                previous_concat_token = assignors.pop()
-                self.spliter_count += 1
-                spliter = AbsToken(f"spliter{self.spliter_count}", None,
-                                   None, self.depth, self.order, self.flow_type,
-                                   self.current_scope)
-                assignors.append(spliter)
-                self.data_structure[self.current_scope][assignee_name] = assignors
-                assignee_name = spliter.token_type
-                self.control_flow_counter += 1
-                if not self.next_depth_correlator:
-                    self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, 1,
-                                                            self.current_scope, self.scopes, self.spliter_count)
-                self.next_depth_correlator.update(self.control_flow_counter, 1, self.current_token, self.last_token)
-                previous_concat_token.depth = self.next_depth_correlator.depth
-                previous_concat_token.order = self.next_depth_correlator.order
-                previous_concat_token.flow_type = self.next_depth_correlator.flow_type
-                assignors = [previous_concat_token]
-                self.control_flow_counter += 1
-                self.__handle_concat(assignors, self.control_flow_counter, 1)
-                spliter.line_num = self.abstractor.lineno
-                spliter.token_pos = self.abstractor.lexpos
+                self.split_counter += 1
+                assignors[-1].split = self.split_counter
+                self.__split_correlate(assignors)
                 break
 
             elif self.current_token.token_type == "QUOTE":
-                self.current_token = self.__next_token()
-                self.spliter_count += 1
-                spliter = AbsToken(f"spliter{self.spliter_count}", None,
-                                   None, self.depth, self.order, self.flow_type,
-                                   self.current_scope)
-                assignors.append(spliter)
-                self.data_structure[self.current_scope][assignee_name] = assignors
-                assignee_name = spliter.token_type
-                assignors = []
-                self.control_flow_counter += 1
-                self.__handle_encapsed_string(assignors, self.control_flow_counter, 1)
-                spliter.line_num = self.abstractor.lineno
-                spliter.token_pos = self.abstractor.lexpos
+                self.split_counter += 1
+                self.__split_correlate(assignors)
+                break
 
-            elif ("FUNC_CALL" in self.current_token.token_type):
+            elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
                 assignors.append(
                     ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, self.current_scope, func_name, arguments))
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
 
             elif "_SANF" in self.current_token.token_type:
                 assignors.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
 
             elif "SQLI_SENS" == self.current_token.token_type:
@@ -269,23 +182,40 @@ class Correlator:
         if assignors:
             self.data_structure[self.current_scope][assignee_name] = assignors
 
-    def __handle_concat(self, assignors, order: int, flow_type: int):
-        if not self.next_depth_correlator:
-            self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes, self.spliter_count)
-        self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
-        self.next_depth_correlator.concat_correlate(assignors)
+    def __split_correlate(self, assignors):
+        """Correlate the concatenation operation."""
+        self.current_token = self.__next_token()
+        self.current_token.split = self.split_counter
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
-    def __handle_encapsed_string(self, assignors, order, flow_type):
-        if not self.next_depth_correlator:
-            self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes, self.spliter_count)
-        self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
-        self.next_depth_correlator.quote_correlate(assignors)
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                assignors.append(self.current_token)
+
+            elif "_SANF" in self.current_token.token_type:
+                assignors.append(self.current_token)
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+
+            elif "FUNC_CALL" in self.current_token.token_type:
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                arguments = self.__handle_func_call()
+                assignors.append(
+                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, self.split_counter, self.current_scope, func_name,
+                                     arguments))
+
+            elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+
+            self.current_token = self.__next_token()
+            self.current_token.split = self.split_counter
 
     # --------------------------------- functions -------------------------------- #
 
-    def __handle_func_defenition(self):
+    def __handle_func_definition(self):
         self.current_token = self.__next_token()
         scope_name = self.current_token.token_type
         self.scopes[scope_name] = []
@@ -298,7 +228,7 @@ class Correlator:
             self.current_token = self.__next_token()
 
         func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes,
-                                     self.spliter_count)
+                                     )
         func_correlator.correlate()
 
     def __handle_func_call(self):
@@ -312,19 +242,19 @@ class Correlator:
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 arguments.append(self.current_token)
 
-            elif ("FUNC_CALL" in self.current_token.token_type):
+            elif "FUNC_CALL" in self.current_token.token_type:
                 # TODO - Function call within a function call
                 while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
 
             elif self.current_token.token_type == "INPUT":
                 arguments.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
 
             elif "_SANF" in self.current_token.token_type:
                 arguments.append(self.current_token)
-                while (self.current_token and self.current_token.token_type != "RPAREN"):
+                while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
 
             elif "SQLI_SENS" == self.current_token.token_type:
@@ -342,11 +272,44 @@ class Correlator:
         while current_token and current_token.type != "SEMI":
             if current_token.type in ("CONSTANT_ENCAPSED_STRING", "ENCAPSED_AND_WHITESPACE"):
                 token = ScopeChangeToken("IMPORT", current_token.lineno, current_token.lexpos, self.depth, self.order,
-                                         self.flow_type, self.current_scope, current_token.value, [])
+                                         self.flow_type, 0, self.current_scope, current_token.value, [])
                 self.data_structure[self.current_scope].setdefault("IMPORTS", []).append(token)
             current_token = self.abstractor.token()
 
     # ------------------------------ vulnerabilities ------------------------------ #
+
+    def __handle_xss_sens(self, assignee: AbsToken):
+        """Handle assignment operations creating data flow."""
+        assignee_name = assignee.token_type
+        assignors = self.data_structure[self.current_scope].get(assignee_name, [])
+
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
+
+            if "VAR" in self.current_token.token_type or self.current_token.token_type in (
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                assignors.append(self.current_token)
+
+            elif "FUNC_CALL" in self.current_token.token_type:
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                arguments = self.__handle_func_call()
+                assignors.append(
+                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
+
+            elif self.current_token.token_type == "INPUT":
+                assignors.append(self.current_token)
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+
+            elif "_SANF" in self.current_token.token_type:
+                assignors.append(self.current_token)
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+
+            self.current_token = self.__next_token()
+
+        if assignors:
+            self.data_structure[self.current_scope][assignee_name] = assignors
 
     def __handle_sqli_sens(self):
         """Handle SQL Injection sensitive operations."""

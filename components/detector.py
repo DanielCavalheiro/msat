@@ -81,6 +81,8 @@ class Detector:
         candidate_paths = self.__handle_control_flows(
             detected_paths, relevant_paths)
 
+        candidate_paths = self.__handle_splits(detected_paths, candidate_paths)
+
         # Check if paths ends in Input or has a Sanitization fuction
         result_paths = self.__get_vulnerable_paths(candidate_paths)
 
@@ -114,7 +116,8 @@ class Detector:
             if len(paths) > 0:
                 detected_paths[token] = paths
 
-    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token, imports):
+    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token,
+                       imports):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
         current_token_type_key = crypto_stuff.hmac_it(
@@ -151,7 +154,8 @@ class Detector:
             imports = self.__get_imports(func_scope)
             for token in func_scope[query]:
                 visited.append(token)
-                self.__detect_flows( func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token, imports)
+                self.__detect_flows(func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token,
+                                    imports)
                 current_path.pop()
                 visited.remove(token)
 
@@ -166,7 +170,8 @@ class Detector:
                 scope_values = self.data_structure[current_token_scope_key]
                 imports = self.__get_imports(scope_values)
                 for token in scope_values[current_token_type_key]:
-                    if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                    if token not in visited and (
+                            not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                         visited.append(token)
                         found_in_import = False
                         for import_token in imports:
@@ -181,7 +186,8 @@ class Detector:
 
                                 imports = self.__get_imports(import_scope)
                                 for token in import_scope[current_token_type_key]:
-                                    if token not in visited and ( not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                                    if token not in visited and (
+                                            not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                                         visited.append(token)
                                         self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink,
                                                             current_path,
@@ -192,7 +198,8 @@ class Detector:
                                 break
                         if found_in_import:
                             continue
-                        self.__detect_flows(current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
+                        self.__detect_flows(current_token_scope_key, scope_values, detected_paths_by_sink, current_path,
+                                            visited, token, imports)
                         current_path.pop()
                         visited.remove(token)
             else:
@@ -211,7 +218,8 @@ class Detector:
                         imports = self.__get_imports(import_scope)
                         for token in import_scope[current_token_type_key]:
                             visited.append(token)
-                            self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token, imports)
+                            self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink, current_path,
+                                                visited, token, imports)
                             current_path.pop()
                             visited.remove(token)
                         break
@@ -223,7 +231,8 @@ class Detector:
 
         else:
             for token in scope_values[current_token_type_key]:
-                if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                if token not in visited and (
+                        not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                     visited.append(token)
                     found_in_import = False
                     for import_token in imports:
@@ -250,7 +259,8 @@ class Detector:
                             break
                     if found_in_import:
                         continue
-                    self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
+                    self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token,
+                                        imports)
                     current_path.pop()
                     visited.remove(token)
 
@@ -260,7 +270,9 @@ class Detector:
         for path in detected_paths_by_sink:
             for i in range(0, min(len(path), len(current_path))):
                 if path[i] != current_path[i]:
-                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
+                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[
+                        i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope and path[
+                        0].split == current_path[i].split:
                         if path[i].token_pos < current_path[i].token_pos:
                             paths_to_remove.append(path)
                             break
@@ -305,7 +317,8 @@ class Detector:
         """check if there are any control flows that need to be considered"""
         candidate_paths = relevant_paths.copy()
         for relevant_path in relevant_paths:
-            for token in relevant_path:
+            split = relevant_path[0].split
+            for i, token in enumerate(relevant_path):
                 if token.depth > relevant_path[0].depth:
                     for path in detected_paths[relevant_path[0]]:
                         if path in candidate_paths:
@@ -321,6 +334,23 @@ class Detector:
                                 elif current_token.order == token.order and current_token.flow_type == token.flow_type and current_token.depth != token.depth:
                                     candidate_paths.append(path)
                                     break
+
+        return candidate_paths
+
+    def __handle_splits(self, detected_paths, candidate_paths):
+        for candidate_path in candidate_paths:
+            for i, token in enumerate(candidate_path):
+                if token.split != candidate_path[0].split:
+                    for path in detected_paths[candidate_path[0]]:
+                        if path in candidate_paths:
+                            continue
+                        j = 0
+                        while j <= i:
+                            if j < min(len(path), len(candidate_path)) and path[j] != candidate_path[j] and path[
+                                j].split == candidate_path[j].split:
+                                candidate_paths.append(path)
+                                break
+                            j += 1
 
         return candidate_paths
 

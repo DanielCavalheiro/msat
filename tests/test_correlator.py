@@ -17,7 +17,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.input(data.read())
                 lexer.lineno = 1
 
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, 0)
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()
 
 for scope, values in data_structure.items():

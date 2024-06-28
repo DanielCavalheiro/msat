@@ -76,10 +76,12 @@ class OldDetector:
         candidate_paths = self.__handle_control_flows(
             detected_paths, relevant_paths)
 
-        # Check if paths ends in Input or has a Sanitization fuction
-        result_paths = self.__get_vulnerable_paths(candidate_paths)
+        candidate_paths = self.__handle_splits(detected_paths, candidate_paths)
 
-        return result_paths
+        # Check if paths ends in Input or has a Sanitization fuction
+        vulnerable_paths = self.__get_vulnerable_paths(candidate_paths)
+
+        return vulnerable_paths
 
     # ---------------------------------------------------------------------------- #
     #                              Auxiliar functions                              #
@@ -249,7 +251,7 @@ class OldDetector:
         for path in detected_paths_by_sink:
             for i in range(0, min(len(path), len(current_path))):
                 if path[i] != current_path[i]:
-                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope:
+                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope and path[0].split == current_path[i].split:
                         if path[i].token_pos < current_path[i].token_pos:
                             paths_to_remove.append(path)
                             break
@@ -313,6 +315,22 @@ class OldDetector:
 
         return candidate_paths
 
+    def __handle_splits(self, detected_paths, candidate_paths):
+        for candidate_path in candidate_paths:
+            for i, token in enumerate(candidate_path):
+                if token.split != candidate_path[0].split:
+                    for path in detected_paths[candidate_path[0]]:
+                        if path in candidate_paths:
+                            continue
+                        j = 0
+                        while j <= i:
+                            if j < min(len(path), len(candidate_path)) and path[j] != candidate_path[j] and path[j].split == candidate_path[j].split:
+                                candidate_paths.append(path)
+                                break
+                            j += 1
+
+        return candidate_paths
+
     def __get_vulnerable_paths(self, candidate_paths):
         """Get the paths that end in a user input"""
         result_paths = []
@@ -325,3 +343,5 @@ class OldDetector:
                     break
 
         return result_paths
+
+

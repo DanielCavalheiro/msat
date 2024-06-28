@@ -20,7 +20,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.file_name = scope
                 lexer.input(data.read())
 
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, 0)
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()
 
 encryptor = Encryptor(ENCRYPT_FLAG)

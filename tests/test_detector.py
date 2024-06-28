@@ -14,7 +14,7 @@ from components.detector import Detector
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, token_decoder
 
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "SQLI"
@@ -32,7 +32,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.input(data.read())
                 lexer.lineno = 1
 
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, 0)
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()
 
 encryptor = Encryptor(ENCRYPT_FLAG)
@@ -73,9 +73,11 @@ def decrypt_token(token, secret_password):
         token.order, secret_password)
     flow_type = crypto_stuff.decrypt_ope(
         token.flow_type, secret_password)
+    split = crypto_stuff.decrypt_sse(
+        base64.b64decode(base64.b64decode(token.split)), secret_password)
     scope = crypto_stuff.decrypt_sse(base64.b64decode(
         base64.b64decode(token.scope)), secret_password)
-    return AbsToken(token_type, line_num, position, depth, order, flow_type, scope)
+    return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)
 
 path_counter = 0
 for path in vulnerable_paths:
