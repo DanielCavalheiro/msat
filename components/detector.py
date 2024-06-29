@@ -146,7 +146,7 @@ class Detector:
             query = crypto_stuff.hmac_it(query, self.shared_password)
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
-                if crypto_stuff.hmac_it(call_arg.token_type, self.shared_password) == func_call:
+                if call_arg.token_type == func_call:
                     arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos, func_arg.depth,
                                            func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
                                            call_arg.scope_name, call_arg.arguments)
@@ -334,8 +334,7 @@ class Detector:
         """check if there are any control flows that need to be considered"""
         candidate_paths = relevant_paths.copy()
         for relevant_path in relevant_paths:
-            split = relevant_path[0].split
-            for i, token in enumerate(relevant_path):
+            for token in relevant_path:
                 if token.depth > relevant_path[0].depth:
                     for path in detected_paths[relevant_path[0]]:
                         if path in candidate_paths:
