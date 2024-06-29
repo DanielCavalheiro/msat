@@ -15,11 +15,14 @@ class Encryptor:
     def __init__(self, encrypt_flag):
         self.encrypt_flag = encrypt_flag  # Flag to encrypt or not
 
-    def encrypt_data_structure(self, data_structure: dict, secret_password, shared_password):
+    def encrypt_data_structure(self, data_structure: dict, secret_password, shared_password,
+                               output_dir="."):
         """Encrypt the data structure with the given password."""
 
+        output_dir = output_dir + "/client_side_output"
+
         if not self.encrypt_flag:
-            with open("../encrypted_ds", "w", encoding="utf-8") as f:
+            with open(output_dir, "w", encoding="utf-8") as f:
                 json.dump(data_structure, f, cls=TokenEncoder, indent=4)
             return
 
@@ -44,10 +47,12 @@ class Encryptor:
                         self.__encrypt_token(value, secret_password, shared_password))
                 encrypted_ds[enc_scope][enc_key] = enc_assignors
 
-                encrypted_ds_json = json.dumps(encrypted_ds, cls=TokenEncoder, indent=4)
-                encrypted_data = crypto_stuff.encrypt_gcm(encrypted_ds_json, shared_password)
+                encrypted_ds_json = json.dumps(
+                    encrypted_ds, cls=TokenEncoder, indent=4)
+                encrypted_data = crypto_stuff.encrypt_gcm(
+                    encrypted_ds_json, shared_password)
 
-        with open("../encrypted_ds", "w", encoding="utf-8") as f:
+        with open(output_dir, "w", encoding="utf-8") as f:
             json.dump(encrypted_data, f, cls=TokenEncoder, indent=4)
 
     def __encrypt_token(self, token, secret_password, shared_password):
@@ -80,7 +85,8 @@ class Encryptor:
                 enc_args.append(self.__encrypt_token(
                     arg, secret_password, shared_password))
 
-            return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, split, scope, func_name, enc_args)
+            return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, split, scope, func_name,
+                                    enc_args)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:
