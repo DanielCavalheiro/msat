@@ -22,7 +22,7 @@ def encrypt_sse(data, password):
     """Encrypts data using deterministic AES in SIV mode."""
     cipher = AES.new(password, AES.MODE_SIV)
     # Add padding, 25 so that it is the same size as hmac
-    padded_data = pad(data.encode(), 25)
+    padded_data = pad(data.encode(), 50)
     ciphertext, tag = cipher.encrypt_and_digest(padded_data)
     return base64.b64encode(ciphertext + tag).decode("utf-8")
 
@@ -34,7 +34,7 @@ def decrypt_sse(encrypted_data, password):
     ciphertext, tag = encrypted_data[:-16], encrypted_data[-16:]
     decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
     # Remove padding, 25 so that it is the same size as hmac
-    unpadded_data = unpad(decrypted_data, 25)
+    unpadded_data = unpad(decrypted_data, 50)
     return unpadded_data.decode()
 
 
@@ -86,7 +86,7 @@ def hash_it(data):
 def hmac_it(data, password):
     """Hashes data using HMAC with SHA."""
     h = hmac.new(password, data.encode(),
-                 hashlib.sha1)  # FIXME SHA1 might need to be changed
+                 hashlib.sha256)  # FIXME SHA1 might need to be changed
     return base64.b64encode(h.hexdigest().encode()).decode("utf-8")
 
 

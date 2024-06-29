@@ -206,7 +206,7 @@ class Abstractor:
                 self.code_block.append([False, 0, ""])
                 self.in_func_decl = True
 
-            case "STRING":  # TODO: What if function call with in function call
+            case "STRING":
                 func_id = self.file_name + "/" + self.__get_func_id(t.value)
                 if self.in_func_decl:
                     self.code_block[-1][2] = func_id

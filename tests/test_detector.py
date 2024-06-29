@@ -50,7 +50,7 @@ with open("../encrypted_ds", "r", encoding="utf-8") as f:
 
     detector.set_vuln_type(DETECTING)
     vulnerable_paths = detector.detect_vulnerability()
-    special_tokens = crypto_stuff.populate_special_tokens(SHARED_PASSWORD)  # TODO change location
+    special_tokens = crypto_stuff.populate_special_tokens(SHARED_PASSWORD)
 
 
 def decrypt_token(token, secret_password):

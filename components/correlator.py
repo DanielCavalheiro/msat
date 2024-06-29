@@ -233,7 +233,7 @@ class Correlator:
         """Handle function calls."""
         self.current_token = self.__next_token()
         arguments = []
-        # FIXME: multiple tokens could come for the same argument :(
+        # TODO: multiple tokens could come for the same argument :(
         while self.current_token and self.current_token.token_type != "END_PARENS":
 
             if "VAR" in self.current_token.token_type or self.current_token.token_type in (
@@ -241,7 +241,6 @@ class Correlator:
                 arguments.append(self.current_token)
 
             elif "FUNC_CALL" in self.current_token.token_type:
-                # TODO - Function call within a function call
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 inner_func_arguments = self.__handle_func_call()
                 scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
