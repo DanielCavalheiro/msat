@@ -5,7 +5,7 @@ from components.encryptor import Encryptor
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 DIR = "/home/dani/tese/hollingworth_app/testing_dir"
 
 data_structure = {}

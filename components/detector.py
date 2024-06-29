@@ -58,7 +58,7 @@ class Detector:
                     for i, func_arg in enumerate(func_scope[args_query]):
                         call_arg = call_args[i]
                         arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                                       func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                                       func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                         func_arg_key = crypto_stuff.hmac_it(
                             func_arg.token_type, self.shared_password)
                         func_arg_correlations = func_scope.get(
@@ -140,7 +140,7 @@ class Detector:
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
                 arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                               func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                               func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                 func_arg_key = crypto_stuff.hmac_it(
                     func_arg.token_type, self.shared_password)
                 func_arg_correlations = func_scope.get(

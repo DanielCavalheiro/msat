@@ -17,8 +17,8 @@ from utils.token_utils import AbsToken, token_decoder
 ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
-DETECTING = "SQLI"
-DIR = "/home/dani/tese/hollingworth_app/testing_dir"
+DETECTING = "XSS"
+DIR = "/home/dani/tese/hollingworth_app/"
 
 data_structure = {}
 lexer = Abstractor()
@@ -39,7 +39,6 @@ encryptor = Encryptor(ENCRYPT_FLAG)
 encryptor.encrypt_data_structure(correlator.data_structure, SECRET_PASSWORD, SHARED_PASSWORD)
 
 with open("../encrypted_ds", "r", encoding="utf-8") as f:
-
     detector = None
     if ENCRYPT_FLAG:
         decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
@@ -61,23 +60,16 @@ def decrypt_token(token, secret_password):
     elif token.token_type == special_tokens["FUNC_CALL"]:
         token_type = "FUNC_CALL"
     else:
-        token_type = crypto_stuff.decrypt_sse(base64.b64decode(
-            base64.b64decode(token.token_type)), secret_password)
-    line_num = crypto_stuff.decrypt_sse(base64.b64decode(
-        base64.b64decode(token.line_num)), secret_password)
-    position = crypto_stuff.decrypt_ope(
-        token.token_pos, secret_password)
-    depth = crypto_stuff.decrypt_ope(
-        token.depth, secret_password)
-    order = crypto_stuff.decrypt_ope(
-        token.order, secret_password)
-    flow_type = crypto_stuff.decrypt_ope(
-        token.flow_type, secret_password)
-    split = crypto_stuff.decrypt_sse(
-        base64.b64decode(base64.b64decode(token.split)), secret_password)
-    scope = crypto_stuff.decrypt_sse(base64.b64decode(
-        base64.b64decode(token.scope)), secret_password)
+        token_type = crypto_stuff.decrypt_sse(base64.b64decode(token.token_type), secret_password)
+    line_num = crypto_stuff.decrypt_sse(base64.b64decode(token.line_num), secret_password)
+    position = crypto_stuff.decrypt_ope(token.token_pos, secret_password)
+    depth = crypto_stuff.decrypt_ope(token.depth, secret_password)
+    order = crypto_stuff.decrypt_ope(token.order, secret_password)
+    flow_type = crypto_stuff.decrypt_ope(token.flow_type, secret_password)
+    split = crypto_stuff.decrypt_sse(base64.b64decode(token.split), secret_password)
+    scope = crypto_stuff.decrypt_sse(base64.b64decode(token.scope), secret_password)
     return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)
+
 
 path_counter = 0
 for path in vulnerable_paths:

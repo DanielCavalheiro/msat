@@ -54,7 +54,7 @@ class OldDetector:
                     for i, func_arg in enumerate(func_scope[args_query]):
                         call_arg = call_args[i]
                         arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                                       func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                                       func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                         func_arg_key = func_arg.token_type
                         func_arg_correlations = func_scope.get(
                             func_arg_key, [])
@@ -131,7 +131,7 @@ class OldDetector:
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
                 arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                               func_arg.depth, func_arg.order, func_arg.flow_type, call_arg.scope)
+                               func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                 func_arg_key = func_arg.token_type
                 func_arg_correlations = func_scope.get(
                     func_arg_key, [])

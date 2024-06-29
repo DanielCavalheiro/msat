@@ -80,8 +80,7 @@ class Encryptor:
                 enc_args.append(self.__encrypt_token(
                     arg, secret_password, shared_password))
 
-            return ScopeChangeToken(token_type, line_num, position, depth, order, split, flow_type, scope, func_name,
-                                    enc_args)
+            return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, split, scope, func_name, enc_args)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:

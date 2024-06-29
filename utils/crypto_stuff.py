@@ -24,7 +24,7 @@ def encrypt_sse(data, password):
     # Add padding, 25 so that it is the same size as hmac
     padded_data = pad(data.encode(), 25)
     ciphertext, tag = cipher.encrypt_and_digest(padded_data)
-    return base64.b64encode(base64.b64encode(ciphertext + tag)).decode("utf-8")
+    return base64.b64encode(ciphertext + tag).decode("utf-8")
 
 
 # Here for testing purposes and will not be used in the final implementation?
@@ -87,7 +87,7 @@ def hmac_it(data, password):
     """Hashes data using HMAC with SHA."""
     h = hmac.new(password, data.encode(),
                  hashlib.sha1)  # FIXME SHA1 might need to be changed
-    return base64.b64encode(base64.b64encode(h.hexdigest().encode())).decode("utf-8")
+    return base64.b64encode(h.hexdigest().encode()).decode("utf-8")
 
 
 def populate_special_tokens(shared_password):

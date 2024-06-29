@@ -35,7 +35,7 @@ class ScopeChangeToken(AbsToken):
         self.arguments = arguments
 
     def __str__(self):
-        return f"ScopeChangeToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.scope}, {self.scope_name}, {str(self.arguments)})"
+        return f"ScopeChangeToken({self.token_type}, {self.line_num}, {self.token_pos}, {self.depth}, {self.order}, {self.flow_type}, {self.split}, {self.scope}, {self.scope_name}, {str(self.arguments)})"
 
 
 class TokenEncoder(json.JSONEncoder):
