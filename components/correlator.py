@@ -84,13 +84,9 @@ class Correlator:
 
             elif "FUNC_CALL" in token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
-
                 arguments = self.__handle_func_call()
-                func_calls = self.data_structure[self.current_scope].get("FUNC_CALL", [])
-                func_calls.append(
-                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
                                      self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
-                self.data_structure[self.current_scope]["FUNC_CALL"] = func_calls
 
             elif token_type == "RETURN":
                 self.__handle_correlation(self.current_token)
@@ -159,9 +155,10 @@ class Correlator:
             elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
-                assignors.append(
-                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
+                scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments)
+                assignors.append(scope_change_token)
+                self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -200,10 +197,12 @@ class Correlator:
             elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
-                assignors.append(
-                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, self.split_counter, self.current_scope, func_name,
-                                     arguments))
+                scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
+                                                      self.current_token.token_pos, self.depth,
+                                                      self.order, self.flow_type, 0, self.current_scope, func_name,
+                                                      arguments)
+                assignors.append(scope_change_token)
+                self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)
@@ -227,8 +226,7 @@ class Correlator:
                 self.scopes[scope_name].append(self.current_token)
             self.current_token = self.__next_token()
 
-        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes,
-                                     )
+        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
         func_correlator.correlate()
 
     def __handle_func_call(self):
@@ -244,8 +242,12 @@ class Correlator:
 
             elif "FUNC_CALL" in self.current_token.token_type:
                 # TODO - Function call within a function call
-                while self.current_token and self.current_token.token_type != "RPAREN":
-                    self.current_token = self.__next_token()
+                func_name = self.current_token.token_type.split(":", 1)[1]
+                inner_func_arguments = self.__handle_func_call()
+                scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, inner_func_arguments)
+                arguments.append(scope_change_token)
+                self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
             elif self.current_token.token_type == "INPUT":
                 arguments.append(self.current_token)
@@ -292,9 +294,12 @@ class Correlator:
             elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
-                assignors.append(
-                    ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
+                scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
+                                                      self.current_token.token_pos, self.depth,
+                                                      self.order, self.flow_type, 0, self.current_scope, func_name,
+                                                      arguments)
+                assignors.append(scope_change_token)
+                self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
             elif self.current_token.token_type == "INPUT":
                 assignors.append(self.current_token)

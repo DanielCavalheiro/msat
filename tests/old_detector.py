@@ -1,7 +1,7 @@
 """Module for the Detector component"""
 
 import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken
+from utils.token_utils import AbsToken, ScopeChangeToken
 
 
 class OldDetector:
@@ -53,8 +53,15 @@ class OldDetector:
                     call_args = func_call.arguments
                     for i, func_arg in enumerate(func_scope[args_query]):
                         call_arg = call_args[i]
-                        arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                                       func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
+                        if call_arg.token_type == fun_query:
+                            arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                                   func_arg.depth,
+                                                   func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
+                                                   call_arg.scope_name, call_arg.arguments)
+                        else:
+                            arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                           func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split,
+                                           call_arg.scope)
                         func_arg_key = func_arg.token_type
                         func_arg_correlations = func_scope.get(
                             func_arg_key, [])
@@ -111,12 +118,14 @@ class OldDetector:
             if len(paths) > 0:
                 detected_paths[token] = paths
 
-    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token, imports):
+    def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token,
+                       imports):
         """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
         current_path.append(current_token)
         current_token_type_key = current_token.token_type
+        fun_query = self.special_tokens["FUNC_CALL"]
 
-        if current_token.token_type == self.special_tokens["FUNC_CALL"]:
+        if current_token.token_type == fun_query:
             if current_token in self.analysed_function_calls:
                 return
             self.analysed_function_calls.append(current_token)
@@ -130,8 +139,13 @@ class OldDetector:
             query = self.special_tokens["ARGS"]
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
-                arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                               func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
+                if call_arg.token_type == fun_query:
+                    arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos, func_arg.depth,
+                                           func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
+                                           call_arg.scope_name, call_arg.arguments)
+                else:
+                    arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                   func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                 func_arg_key = func_arg.token_type
                 func_arg_correlations = func_scope.get(
                     func_arg_key, [])
@@ -141,11 +155,15 @@ class OldDetector:
             # Recursively find flows in the function scope
             query = self.special_tokens["RETURN"]
             imports = self.__get_imports(func_scope)
-            for token in func_scope[query]:
-                visited.append(token)
-                self.__detect_flows( func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token, imports)
-                current_path.pop()
-                visited.remove(token)
+            if query not in func_scope:
+                self.__conclude_path(current_path, detected_paths_by_sink)
+            else:
+                for token in func_scope[query]:
+                    visited.append(token)
+                    self.__detect_flows(func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token,
+                                        imports)
+                    current_path.pop()
+                    visited.remove(token)
 
         elif current_token_type_key not in scope_values:
             current_token_scope_key = current_token.scope
@@ -157,7 +175,8 @@ class OldDetector:
                 scope_values = self.data_structure[current_token_scope_key]
                 imports = self.__get_imports(scope_values)
                 for token in scope_values[current_token_type_key]:
-                    if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                    if token not in visited and (
+                            not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                         visited.append(token)
                         found_in_import = False
                         for import_token in imports:
@@ -172,7 +191,8 @@ class OldDetector:
 
                                 imports = self.__get_imports(import_scope)
                                 for token in import_scope[current_token_type_key]:
-                                    if token not in visited and ( not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                                    if token not in visited and (
+                                            not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                                         visited.append(token)
                                         self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink,
                                                             current_path,
@@ -183,7 +203,8 @@ class OldDetector:
                                 break
                         if found_in_import:
                             continue
-                        self.__detect_flows(current_token_scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
+                        self.__detect_flows(current_token_scope_key, scope_values, detected_paths_by_sink, current_path,
+                                            visited, token, imports)
                         current_path.pop()
                         visited.remove(token)
             else:
@@ -202,7 +223,8 @@ class OldDetector:
                         imports = self.__get_imports(import_scope)
                         for token in import_scope[current_token_type_key]:
                             visited.append(token)
-                            self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink, current_path, visited, token, imports)
+                            self.__detect_flows(import_scope_key, import_scope, detected_paths_by_sink, current_path,
+                                                visited, token, imports)
                             current_path.pop()
                             visited.remove(token)
                         break
@@ -214,7 +236,8 @@ class OldDetector:
 
         else:
             for token in scope_values[current_token_type_key]:
-                if token not in visited and (not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
+                if token not in visited and (
+                        not current_token or current_token.scope != token.scope or current_token.token_pos > token.token_pos):
                     visited.append(token)
                     found_in_import = False
                     for import_token in imports:
@@ -241,7 +264,8 @@ class OldDetector:
                             break
                     if found_in_import:
                         continue
-                    self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token, imports)
+                    self.__detect_flows(scope_key, scope_values, detected_paths_by_sink, current_path, visited, token,
+                                        imports)
                     current_path.pop()
                     visited.remove(token)
 
@@ -251,7 +275,9 @@ class OldDetector:
         for path in detected_paths_by_sink:
             for i in range(0, min(len(path), len(current_path))):
                 if path[i] != current_path[i]:
-                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope and path[0].split == current_path[i].split:
+                    if path[i].depth == current_path[i].depth and path[i].order == current_path[i].order and path[
+                        i].flow_type == current_path[i].flow_type and path[i].scope == current_path[i].scope and path[
+                        0].split == current_path[i].split:
                         if path[i].token_pos < current_path[i].token_pos:
                             paths_to_remove.append(path)
                             break
@@ -284,6 +310,8 @@ class OldDetector:
                             if closest is None:
                                 closest = current_path[i]
                                 best = current_path
+                            if current_token.scope != current_sink.scope:
+                                continue
                             elif current_sink.token_pos - current_token.token_pos < current_sink.token_pos - closest.token_pos:
                                 closest = current_path[i]
                                 best = current_path
@@ -324,7 +352,8 @@ class OldDetector:
                             continue
                         j = 0
                         while j <= i:
-                            if j < min(len(path), len(candidate_path)) and path[j] != candidate_path[j] and path[j].split == candidate_path[j].split:
+                            if j < min(len(path), len(candidate_path)) and path[j] != candidate_path[j] and path[
+                                j].split == candidate_path[j].split:
                                 candidate_paths.append(path)
                                 break
                             j += 1
@@ -343,5 +372,3 @@ class OldDetector:
                     break
 
         return result_paths
-
-

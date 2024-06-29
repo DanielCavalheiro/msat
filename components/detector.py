@@ -1,7 +1,7 @@
 """Module for the Detector component"""
 
 import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken
+from utils.token_utils import AbsToken, ScopeChangeToken
 
 
 class Detector:
@@ -57,8 +57,15 @@ class Detector:
                     call_args = func_call.arguments
                     for i, func_arg in enumerate(func_scope[args_query]):
                         call_arg = call_args[i]
-                        arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                                       func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
+                        if crypto_stuff.hmac_it(call_arg.token_type, self.shared_password) == fun_query:
+                            arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                                   func_arg.depth,
+                                                   func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
+                                                   call_arg.scope_name, call_arg.arguments)
+                        else:
+                            arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                           func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split,
+                                           call_arg.scope)
                         func_arg_key = crypto_stuff.hmac_it(
                             func_arg.token_type, self.shared_password)
                         func_arg_correlations = func_scope.get(
@@ -122,8 +129,8 @@ class Detector:
         current_path.append(current_token)
         current_token_type_key = crypto_stuff.hmac_it(
             current_token.token_type, self.shared_password)
-
-        if current_token.token_type == self.special_tokens["FUNC_CALL"]:
+        func_call = self.special_tokens["FUNC_CALL"]
+        if current_token.token_type == func_call:
             if current_token in self.analysed_function_calls:
                 return
             self.analysed_function_calls.append(current_token)
@@ -139,8 +146,13 @@ class Detector:
             query = crypto_stuff.hmac_it(query, self.shared_password)
             for i, func_arg in enumerate(func_scope[query]):
                 call_arg = call_args[i]
-                arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                               func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
+                if crypto_stuff.hmac_it(call_arg.token_type, self.shared_password) == func_call:
+                    arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos, func_arg.depth,
+                                           func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
+                                           call_arg.scope_name, call_arg.arguments)
+                else:
+                    arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                   func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
                 func_arg_key = crypto_stuff.hmac_it(
                     func_arg.token_type, self.shared_password)
                 func_arg_correlations = func_scope.get(
@@ -152,12 +164,15 @@ class Detector:
             query = self.special_tokens["RETURN"]
             query = crypto_stuff.hmac_it(query, self.shared_password)
             imports = self.__get_imports(func_scope)
-            for token in func_scope[query]:
-                visited.append(token)
-                self.__detect_flows(func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token,
-                                    imports)
-                current_path.pop()
-                visited.remove(token)
+            if query not in func_scope:
+                self.__conclude_path(current_path, detected_paths_by_sink)
+            else:
+                for token in func_scope[query]:
+                    visited.append(token)
+                    self.__detect_flows(func_name_key, func_scope, detected_paths_by_sink, current_path, visited, token,
+                                        imports)
+                    current_path.pop()
+                    visited.remove(token)
 
         elif current_token_type_key not in scope_values:
             current_token_scope_key = crypto_stuff.hmac_it(
@@ -305,6 +320,8 @@ class Detector:
                             if closest is None:
                                 closest = current_path[i]
                                 best = current_path
+                            if current_token.scope != current_sink.scope:
+                                continue
                             elif current_sink.token_pos - current_token.token_pos < current_sink.token_pos - closest.token_pos:
                                 closest = current_path[i]
                                 best = current_path

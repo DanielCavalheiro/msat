@@ -18,7 +18,7 @@ ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
-DIR = "/home/dani/tese/hollingworth_app/"
+DIR = "/home/dani/tese/hollingworth_app"
 
 data_structure = {}
 lexer = Abstractor()

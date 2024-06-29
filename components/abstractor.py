@@ -26,7 +26,7 @@ class Abstractor:
         self.func_count = 0
 
         # Auxiliary variables for code context
-        self.in_parens = False
+        self.in_parens = 0
         self.code_block = []
         self.check_if_oneliner = False
         self.rparen_count = 0
@@ -154,7 +154,7 @@ class Abstractor:
             case "IF" | "ELSEIF" | "WHILE" | "FOR" | "FOREACH" | "SWITCH":
                 # oneliner flag and 1 for if/elseif/while/for
                 self.code_block.append([False, 1])
-                self.in_parens = True
+                self.in_parens += 1
                 self.__skip_until("LPAREN")
 
             case "ELSE":
@@ -176,7 +176,7 @@ class Abstractor:
             case "RPAREN":
                 if self.in_parens:
                     if self.rparen_count == 0:
-                        self.in_parens = False
+                        self.in_parens -= 1
                         t.type = "END_PARENS"
                         # If it's not a do-while or function block then next is a condition
                         if self.code_block and self.code_block[-1][1] not in [0, 3]:
@@ -187,7 +187,7 @@ class Abstractor:
                 if self.code_block and self.code_block[-1][0] is True:
                     t.type = "END_CF"
                     if self.code_block[-1][1] == 3:
-                        self.in_parens = True
+                        self.in_parens += 1
                         self.__skip_until("WHILE")
                     self.code_block.pop()
 
@@ -198,7 +198,7 @@ class Abstractor:
                     elif self.code_block[-1][0] is False:
                         t.type = "END_CF"
                         if self.code_block[-1][1] == 3:
-                            self.in_parens = True
+                            self.in_parens += 1
                             self.__skip_until("WHILE")
                     self.code_block.pop()
 
@@ -212,14 +212,14 @@ class Abstractor:
                     self.code_block[-1][2] = func_id
                     t.type = func_id
                     self.__skip_until("LPAREN")
-                    self.in_parens = True
+                    self.in_parens += 1
                     self.in_func_decl = False
                 else:
                     next_token = self.peek()
                     if next_token and next_token.type == "LPAREN":
                         t.type = "FUNC_CALL:" + func_id
                         self.peeked_token = None
-                        self.in_parens = True
+                        self.in_parens += 1
             case "INPUT":
                 next_token = self.peek()
                 if next_token and next_token.type == "LBRACKET":
