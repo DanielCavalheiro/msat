@@ -1,24 +1,49 @@
+from utils.token_utils import ResultToken, token_decoder, result_decoder
+import utils.crypto_stuff as crypto_stuff
+from components.detector import Detector
+from components.encryptor import Encryptor
+from components.abstractor import Abstractor
+from components.correlator import Correlator
+from tests.old_detector import OldDetector
 import base64
 import json
-import sys
 import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-
-from tests.old_detector import OldDetector
-from components.correlator import Correlator
-from components.abstractor import Abstractor
-from components.encryptor import Encryptor
-from components.detector import Detector
-import utils.crypto_stuff as crypto_stuff
-from utils.token_utils import AbsToken, token_decoder
 
 ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "XSS"
-DIR = "/home/dani/tese/hollingworth_app/"
+DIR = "/home/dani/tese/hollingworth_app/testing_dir"
+
+
+def decrypt_token(token, secret_password):
+    """Decrypts an encrypted token."""
+    if token.token_type == special_tokens["INPUT"]:
+        token_type = "INPUT"
+    elif token.token_type == special_tokens["FUNC_CALL"]:
+        token_type = "FUNC_CALL"
+    else:
+        token_type = crypto_stuff.decrypt_sse(
+            base64.b64decode(token.token_type), secret_password)
+    line_num = crypto_stuff.decrypt_sse(
+        base64.b64decode(token.line_num), secret_password)
+    position = crypto_stuff.decrypt_ope(token.token_pos, secret_password)
+    scope = crypto_stuff.decrypt_sse(
+        base64.b64decode(token.scope), secret_password)
+    if token.arguments is not None:
+        scope_name = crypto_stuff.decrypt_sse(
+            base64.b64decode(token.scope_name), secret_password)
+        arguments = []
+        for arg in token.arguments:
+            arguments.append(decrypt_token(arg, secret_password))
+        return ResultToken(token_type, line_num, position, scope, scope_name, arguments)
+    elif token.scope_name is not None:
+        scope_name = crypto_stuff.decrypt_sse(
+            base64.b64decode(token.scope_name), secret_password)
+        return ResultToken(token_type, line_num, position, scope, scope_name)
+
+    return ResultToken(token_type, line_num, position, scope)
+
 
 data_structure = {}
 lexer = Abstractor()
@@ -36,9 +61,12 @@ for root, dirs, files in os.walk(DIR):
                 correlator.correlate()
 
 encryptor = Encryptor(ENCRYPT_FLAG)
-encryptor.encrypt_data_structure(correlator.data_structure, SECRET_PASSWORD, SHARED_PASSWORD)
+encryptor.encrypt_data_structure(
+    correlator.data_structure, SECRET_PASSWORD, SHARED_PASSWORD)
 
-with open("../encrypted_ds", "r", encoding="utf-8") as f:
+vulnerable_paths = []
+
+with open("client_side_output", "r", encoding="utf-8") as f:
     detector = None
     if ENCRYPT_FLAG:
         decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
@@ -50,33 +78,22 @@ with open("../encrypted_ds", "r", encoding="utf-8") as f:
 
     detector.set_vuln_type(DETECTING)
     vulnerable_paths = detector.detect_vulnerability()
-    special_tokens = crypto_stuff.populate_special_tokens(SHARED_PASSWORD)
 
+encryptor.encrypt_result(vulnerable_paths, SHARED_PASSWORD)
 
-def decrypt_token(token, secret_password):
-    """Decrypts an encrypted token."""
-    if token.token_type == special_tokens["INPUT"]:
-        token_type = "INPUT"
-    elif token.token_type == special_tokens["FUNC_CALL"]:
-        token_type = "FUNC_CALL"
+with open("auditor_side_output", "r", encoding="utf-8") as f:
+    if ENCRYPT_FLAG:
+        decrypted_data = crypto_stuff.decrypt_gcm(f.read(), SHARED_PASSWORD)
     else:
-        token_type = crypto_stuff.decrypt_sse(base64.b64decode(token.token_type), secret_password)
-    line_num = crypto_stuff.decrypt_sse(base64.b64decode(token.line_num), secret_password)
-    position = crypto_stuff.decrypt_ope(token.token_pos, secret_password)
-    depth = crypto_stuff.decrypt_ope(token.depth, secret_password)
-    order = crypto_stuff.decrypt_ope(token.order, secret_password)
-    flow_type = crypto_stuff.decrypt_ope(token.flow_type, secret_password)
-    split = crypto_stuff.decrypt_sse(base64.b64decode(token.split), secret_password)
-    scope = crypto_stuff.decrypt_sse(base64.b64decode(token.scope), secret_password)
-    return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)
-
-
-path_counter = 0
-for path in vulnerable_paths:
-    path_counter += 1
-    print(f"\nVulnerable path {path_counter}:")
-    for token in path:
-        if ENCRYPT_FLAG:
-            print("\t" + str(decrypt_token(token, SECRET_PASSWORD)))
-        else:
-            print("\t" + str(token))
+        decrypted_data = f.read()
+    vulnerable_paths = json.loads(decrypted_data, object_hook=result_decoder)
+    special_tokens = crypto_stuff.populate_special_tokens(SHARED_PASSWORD)
+    path_counter = 0
+    for path in vulnerable_paths:
+        path_counter += 1
+        print(f"\nVulnerable path {path_counter}:")
+        for token in path:
+            if ENCRYPT_FLAG:
+                print("\t" + str(decrypt_token(token, SECRET_PASSWORD)))
+            else:
+                print("\t" + str(token))

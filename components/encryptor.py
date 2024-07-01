@@ -1,7 +1,7 @@
 """Module for the Encryptor component"""
 
 import json
-from utils.token_utils import AbsToken, ScopeChangeToken, TokenEncoder
+from utils.token_utils import AbsToken, ScopeChangeToken, ResultToken, TokenEncoder, ResultEncoder
 import utils.crypto_stuff as crypto_stuff
 
 SPECIAL_TOKENS = ("INPUT", "XSS_SENS", "XSS_SANF",
@@ -12,7 +12,7 @@ SPECIAL_TOKENS = ("INPUT", "XSS_SENS", "XSS_SANF",
 class Encryptor:
     """Encryptor component to encrypt data structure."""
 
-    def __init__(self, encrypt_flag):
+    def __init__(self, encrypt_flag=True):
         self.encrypt_flag = encrypt_flag  # Flag to encrypt or not
 
     def encrypt_data_structure(self, data_structure: dict, secret_password, shared_password,
@@ -54,6 +54,26 @@ class Encryptor:
 
         with open(output_dir, "w", encoding="utf-8") as f:
             json.dump(encrypted_data, f, cls=TokenEncoder, indent=4)
+
+    def encrypt_result(self, vulnerable_paths, shared_password, output_dir="."):
+        """Encrypt the result with the given password."""
+
+        output_dir = output_dir + "/auditor_side_output"
+
+        if not self.encrypt_flag:
+            with open(output_dir, "w", encoding="utf-8") as f:
+                json.dump(vulnerable_paths, f, cls=TokenEncoder, indent=4)
+            return
+
+        for path in vulnerable_paths:
+            for i, token in enumerate(path):
+                path[i] = self.__convert_to_result(token)
+
+        encrypted_result = json.dumps(vulnerable_paths, cls=ResultEncoder, indent=4)
+        encrypted_data = crypto_stuff.encrypt_gcm(encrypted_result, shared_password)
+
+        with open(output_dir, "w", encoding="utf-8") as f:
+            json.dump(encrypted_data, f, cls=ResultEncoder, indent=4)
 
     def __encrypt_token(self, token, secret_password, shared_password):
         """Encrypt the token with the given password."""
@@ -97,3 +117,16 @@ class Encryptor:
                     token.token_type, secret_password)
 
             return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)
+
+    def __convert_to_result(self, token):
+        if isinstance(token, ScopeChangeToken):
+            if token.arguments:
+                arguments = []
+                for arg in token.arguments:
+                    arguments.append(self.__convert_to_result(arg))
+                return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope,
+                                   token.scope_name, arguments)
+            return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope,
+                               token.scope_name)
+        else:  # isinstance(token, AbsToken)
+            return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope)

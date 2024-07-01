@@ -7,7 +7,7 @@ from utils.token_utils import AbsToken, ScopeChangeToken
 class Detector:
     """Detector component that detects vulnerabilities"""
 
-    def __init__(self, data_structure: dict, shared_password, encrypt_flag):
+    def __init__(self, data_structure: dict, shared_password, encrypt_flag=True):
         self.data_structure = data_structure
         self.shared_password = shared_password
         if encrypt_flag:
