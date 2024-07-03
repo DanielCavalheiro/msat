@@ -66,6 +66,10 @@ def main(secret_password, shared_password, file):
                         result_message = result_message + "\t" + str(i) + ". " + str(
                             decrypt_token(token, secret_password, special_tokens)) + "\n"
                     result_message = result_message + "\n"
+    except ValueError as e:
+        error = f"Wrong password or file is corrupted. Error: {e}"
+        print(error)
+        return 0, error
     except Exception as e:
         error = f"Error: {e}"
         print(error)

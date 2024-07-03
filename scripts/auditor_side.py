@@ -35,7 +35,10 @@ def main(shared_password, file, vulnerability_to_detect, output_dir):
             vulnerable_paths = detector.detect_vulnerability()
             encryptor = Encryptor()
             encryptor.encrypt_result(vulnerable_paths, shared_password, output_dir)
-
+    except ValueError as e:
+        error = f"Wrong password or file is corrupted. Error: {e}"
+        print(error)
+        return 0, error
     except Exception as e:
         error = f"Error: {e}"
         print(error)
