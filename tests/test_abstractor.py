@@ -1,4 +1,5 @@
-import sys
+"""Tests the abstracter component individually"""
+
 import os
 from components.abstractor import Abstractor
 

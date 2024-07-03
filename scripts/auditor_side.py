@@ -1,3 +1,5 @@
+"""Script that uses the output of the clint side to detect vulnerabilities without revealing them"""
+
 import json
 import sys
 import os

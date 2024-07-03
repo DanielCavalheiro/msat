@@ -1,3 +1,5 @@
+"""Scrip that runs all components of tool in sequence and prints the vulnerable paths if any."""
+
 import base64
 import json
 import os

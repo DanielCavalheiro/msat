@@ -1,3 +1,5 @@
+"""Tests the correlator component individually"""
+
 import sys
 import os
 from components.abstractor import Abstractor

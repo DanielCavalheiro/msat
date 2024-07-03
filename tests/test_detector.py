@@ -1,3 +1,5 @@
+"""Tests the detector component individually"""
+
 from utils.token_utils import ResultToken, token_decoder, result_decoder
 import utils.crypto_stuff as crypto_stuff
 from components.detector import Detector

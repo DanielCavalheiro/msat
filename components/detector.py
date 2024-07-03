@@ -39,10 +39,13 @@ class Detector:
         args_query = crypto_stuff.hmac_it(args_query, self.shared_password)
 
         for scope_key, scope_values in self.data_structure.items():
+
+            # Check if the scope has the sensitive sink
             if vul_query in scope_values:
                 self.__detect_paths_in_scope(
                     scope_key, scope_values, vul_query, detected_paths)
 
+            # Check all function calls have sensitive sinks in their scopes
             if fun_query in scope_values:
                 for func_call in scope_values[fun_query]:
                     if func_call in self.analysed_function_calls:
@@ -81,7 +84,7 @@ class Detector:
         if all(len(paths) == 0 for paths in detected_paths.values()):
             return []
 
-            # Get best matches
+        # Get best matches
         relevant_paths = self.__get_best_match(detected_paths)
 
         # Handle Control Flows
@@ -125,7 +128,7 @@ class Detector:
 
     def __detect_flows(self, scope_key, scope_values, detected_paths_by_sink, current_path, visited, current_token,
                        imports):
-        """Recursive function to detect data flows that start at a input and end in a sensitive sink"""
+        """Recursive function to detect data flows that start at an input and end in a sensitive sink"""
         current_path.append(current_token)
         current_token_type_key = crypto_stuff.hmac_it(
             current_token.token_type, self.shared_password)
@@ -354,6 +357,7 @@ class Detector:
         return candidate_paths
 
     def __handle_splits(self, detected_paths, candidate_paths):
+        """check if there are any splits that need to be considered"""
         for candidate_path in candidate_paths:
             for i, token in enumerate(candidate_path):
                 if token.split != candidate_path[0].split:

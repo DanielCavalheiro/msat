@@ -13,24 +13,24 @@ class Abstractor:
         self.file_name = None
 
         # Lexer setup
-        self.lexer = lex(module=token_rules)
-        self.last_token = None
-        self.peeked_token = None
+        self.lexer = lex(module=token_rules)  # lexer rules
+        self.last_token = None  # Last token seen
+        self.peeked_token = None  # Next token to be seen
 
         # Abstracting variables/operations/functions
-        self.var_abstractor = {}
-        self.var_count = 0
-        self.op_abstractor = {}
-        self.op_count = 0
-        self.func_abstractor = {}
-        self.func_count = 0
+        self.var_abstractor = {}  # all variables seen until now and their corresponding abstracted variable name
+        self.var_count = 0  # count of variables seen
+        self.op_abstractor = {}  # all operations seen until now and their corresponding abstracted operation name
+        self.op_count = 0  # count of operations seen
+        self.func_abstractor = {}  # all functions seen until now and their corresponding abstracted function name
+        self.func_count = 0  # count of functions seen
 
         # Auxiliary variables for code context
-        self.in_parens = 0
-        self.code_block = []
-        self.check_if_oneliner = False
-        self.rparen_count = 0
-        self.in_func_decl = False
+        self.in_parens = 0  # count of parenthesis opened
+        self.code_block = []  # code block context (if/else/while/for/foreach/switch/function)
+        self.check_if_oneliner = False  # flag to check if code block has no curly braces (one-liner)
+        self.rparen_count = 0  # count of right parenthesis we must see before closing parenthesis
+        self.in_func_decl = False  # flag to check if we are in a function declaration
 
     @property
     def lineno(self):
@@ -48,6 +48,7 @@ class Abstractor:
 
     @lexpos.setter
     def lexpos(self, value):
+        """Set the current lex position."""
         self.lexer.lexpos = value
 
     def current_state(self):
@@ -114,7 +115,7 @@ class Abstractor:
             t = self.next_lexer_token()
 
         # Will reach this code if the last token was a right parenthesis in a condition statement token
-        # Check if its a condition with one line or not
+        # Check if it's a condition with one line or not
         if self.check_if_oneliner:
             if t and t.type != "LBRACE":
                 # Set the oneliner flag to True
@@ -129,11 +130,7 @@ class Abstractor:
 
         match t.type:
             case "VARIABLE":
-                # if self.code_block:
-                #     for i in reversed(self.code_block):
-                #         if i[1] == 0:
-                #             t.value = i[2] + ":" + t.value
-                #             break
+                # Abstract variable names (e.g. $username -> VAR1)
                 if t.value in self.var_abstractor:
                     t.type = self.var_abstractor[t.value]
                 else:
@@ -142,7 +139,8 @@ class Abstractor:
                     t.type = f"VAR{self.var_count}"
 
             case "OPERATOR":
-                if t.value == "=":
+                # Abstract operators (e.g. == -> OP1)
+                if t.value == "=":  # assigment will always be OP0
                     t.type = "OP0"
                 elif t.value in self.op_abstractor:
                     t.type = self.op_abstractor[t.value]
@@ -151,29 +149,31 @@ class Abstractor:
                     self.op_abstractor[t.value] = f"OP{self.op_count}"
                     t.type = f"OP{self.op_count}"
 
-            case "IF" | "ELSEIF" | "WHILE" | "FOR" | "FOREACH" | "SWITCH":
+            case "IF" | "ELSEIF" | "WHILE" | "FOR" | "FOREACH" | "SWITCH": # simple code blocks have code block type 1
                 # oneliner flag and 1 for if/elseif/while/for
-                self.code_block.append([False, 1])
+                self.code_block.append([False, 1]) # 1 for if/elseif/while/for simple code block
                 self.in_parens += 1
                 self.__skip_until("LPAREN")
 
             case "ELSE":
                 # oneliner flag and 2 for else
-                self.code_block.append([False, 2])
+                self.code_block.append([False, 2]) # 2 for else
                 self.check_if_oneliner = True
 
             case "DO":
                 # oneliner flag and 3 for do
-                self.code_block.append([False, 3])
+                self.code_block.append([False, 3]) # 3 for do
                 self.check_if_oneliner = True
 
             case "LPAREN":
                 if self.in_parens:
-                    self.rparen_count += 1
+                    self.rparen_count += 1 # rparen goes up to know when we are out of the parenthesis
                 if self.last_token and "FUNC_CALL" in self.last_token.type:
+                    # if the last token was a function call then we are in a function call and so in parentheses
                     pass
 
             case "RPAREN":
+                # if we are in a parenthesis then we decrease the count and see if we are out of the parenthesis
                 if self.in_parens:
                     if self.rparen_count == 0:
                         self.in_parens -= 1
@@ -184,29 +184,38 @@ class Abstractor:
                     else:
                         self.rparen_count -= 1
             case "SEMI":
+                # check if we were in a code block that is an oneliner
                 if self.code_block and self.code_block[-1][0] is True:
+                    # if it was an oneliner then we are out of the code block
                     t.type = "END_CF"
                     if self.code_block[-1][1] == 3:
+                        # if it was a do-while then we are in a while block now
                         self.in_parens += 1
                         self.__skip_until("WHILE")
                     self.code_block.pop()
 
             case "RBRACE":
+                # if we were in a code block then we are out of it
                 if self.code_block:
                     if self.code_block[-1][1] == 0:
+                        # if it was a function block then we are out of the function
                         t.type = "END_FUNC"
                     elif self.code_block[-1][0] is False:
+                        # if it was a code block that is not an oneliner then we are out of the code block
                         t.type = "END_CF"
                         if self.code_block[-1][1] == 3:
+                            # if it was a do-while then we are in a while block now
                             self.in_parens += 1
                             self.__skip_until("WHILE")
                     self.code_block.pop()
 
             case "FUNCTION":
+                # Now we are in a function declaration
                 self.code_block.append([False, 0, ""])
                 self.in_func_decl = True
 
             case "STRING":
+                # Abstract function names (e.g. "foo" -> FUNC1)
                 func_id = self.file_name + "/" + self.__get_func_id(t.value)
                 if self.in_func_decl:
                     self.code_block[-1][2] = func_id
@@ -221,6 +230,7 @@ class Abstractor:
                         self.peeked_token = None
                         self.in_parens += 1
             case "INPUT":
+                # Remove unnecessary tokens afert an input token
                 next_token = self.peek()
                 if next_token and next_token.type == "LBRACKET":
                     self.__skip_until("RBRACKET")

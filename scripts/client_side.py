@@ -1,3 +1,5 @@
+"""Script that converts a directory with php code in to an encrypt version of it to be used by the auditor side."""
+
 import os
 import sys
 

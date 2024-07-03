@@ -1,4 +1,5 @@
-import sys
+"""Tests the encryptor component individually"""
+
 import os
 import utils.crypto_stuff as crypto_stuff
 from components.encryptor import Encryptor
