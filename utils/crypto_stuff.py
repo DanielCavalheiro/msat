@@ -60,17 +60,21 @@ def encrypt_gcm(data, password):
     """Encrypts data using AES in GCM mode."""
     cipher = AES.new(password, AES.MODE_GCM)
     nonce = cipher.nonce
-    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
+    data_length = len(data).to_bytes(4, 'big')
+    padded_data = pad(data_length + data.encode(), 16)  # Pad data to a multiple of 16 bytes
+    ciphertext, tag = cipher.encrypt_and_digest(padded_data)
     return base64.b64encode(nonce + ciphertext + tag).decode("utf-8")
 
 
 def decrypt_gcm(encrypted_data, password):
     """Decrypts data using AES in GCM mode."""
     decoded_data = base64.b64decode(encrypted_data)
-    nonce, ciphertext, tag = decoded_data[:16], decoded_data[16:-
-                                                             16], decoded_data[-16:]
+    nonce, ciphertext, tag = decoded_data[:16], decoded_data[16:-16], decoded_data[-16:]
     cipher = AES.new(password, AES.MODE_GCM, nonce=nonce)
-    decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
+    decrypted_padded_data = cipher.decrypt_and_verify(ciphertext, tag)
+    # Extract original data length and remove padding
+    original_data_length = int.from_bytes(decrypted_padded_data[:4], 'big')
+    decrypted_data = decrypted_padded_data[4:4 + original_data_length]  # Remove the prepended length and padding
     return decrypted_data.decode()
 
 

@@ -10,8 +10,10 @@ for root, dirs, files in os.walk(DIR):
             php_files.append(os.path.join(root, file))
 
 lexer = Abstractor()
+found_php_files = False
 for file in php_files:
     with open(file, "r", encoding="utf-8") as data:
+        found_php_files = True
         lexer.file_name = os.path.basename(file)
         lexer.input(data.read())
         lexer.lineno = 1
@@ -21,3 +23,7 @@ for file in php_files:
             if not token:
                 break
             print(token)
+
+if not found_php_files:
+    print(f"No PHP files found in {DIR}")
+    exit(0)

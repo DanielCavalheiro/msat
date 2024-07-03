@@ -28,9 +28,11 @@ def main(secret_password, shared_password, repo_dir, output_dir):
         data_structure = {}
         lexer = Abstractor()
 
+        found_php_files = False
         for root, dirs, files in os.walk(repo_dir):
             for file in files:
                 if file.endswith('.php'):
+                    found_php_files = True
                     php_file = os.path.join(root, file)
                     with open(php_file, "r", encoding="utf-8") as data:
                         scope = os.path.basename(php_file)
@@ -40,6 +42,11 @@ def main(secret_password, shared_password, repo_dir, output_dir):
 
                         correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                         correlator.correlate()
+
+        if not found_php_files:
+            error = f"No PHP files found in {repo_dir}"
+            print(error)
+            return 0, error
 
         encryptor = Encryptor()
         encryptor.encrypt_data_structure(

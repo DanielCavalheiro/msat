@@ -27,7 +27,7 @@ class Encryptor:
             return
 
         encrypted_ds = {}  # Encrypted data structure
-        encrypted_data = None
+        encrypted_data = {}
         for scope, values in data_structure.items():
             enc_scope = crypto_stuff.encrypt_sse(scope, secret_password)
             enc_scope = crypto_stuff.hmac_it(enc_scope, shared_password)
