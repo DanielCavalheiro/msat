@@ -49,16 +49,15 @@ class ResultToken:
         self.arguments = arguments
 
     def __str__(self):
-        str = f"ResultToken({self.token_type}, {self.line_num}, {
-            self.token_pos}, {self.scope}"
+        str = f"type: {self.token_type}, line: {self.line_num}, position: {self.token_pos}, scope: {self.scope}"
         if self.scope_name:
-            str += f", {self.scope_name}"
+            str += f", change_to: {self.scope_name}"
             if self.arguments:
-                str += ", arguments:"
+                str += ", arguments: ("
                 for arg in self.arguments:
                     str += f" {ResultToken(arg.token_type, arg.line_num,
                                            arg.token_pos, arg.scope, arg.scope_name, arg.arguments)}"
-        str += ")"
+                str += ")"
         return str
 
 
