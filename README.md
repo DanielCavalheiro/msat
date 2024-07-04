@@ -16,19 +16,25 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
 ### Steps
 
 1. Clone the repository / Download zip and extract it
-    ```bash
+
+   ```bash
     git clone https://github.com/DanielCavalheiro/msat.git
     ```
-2. Navigate into the project directory
+
+3. Navigate into the project directory
     ```bash
     cd msat
     ```
+
 4. Create a Virtual Enviorment
-   ```bash
+
+    ```bash
    python -m venv venv
    ```
-5. Activate the Virtual Enviorment\
-   On macOS and Linux
+
+6. Activate the Virtual Enviorment
+
+    On macOS and Linux
    ```bash
    source venv/bin/activate
    ```
@@ -36,7 +42,9 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
    ```bash
    venv\Scripts\activate
    ```
-6. Install dependencies
+
+8. Install dependencies
+
     ```bash
     pip install -r requirements.txt
     ```
