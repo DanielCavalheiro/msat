@@ -84,6 +84,6 @@ def main(secret_password, shared_password, file):
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print(f"Error: Incorrect number of arguments. Expected {3}, got {len(sys.argv) - 1}.")
-        print("Usage: python3 decrypt_result.py <secret_password> <shared_password> <dir> <output_dir>")
+        print("Usage: python3 decrypt_result.py <secret_password> <shared_password> <file>")
         sys.exit(1)
     main(sys.argv[1], sys.argv[2], sys.argv[3])

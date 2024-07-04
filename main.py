@@ -145,7 +145,7 @@ auditor_side_tooltip = CreateToolTip(auditor_side_tooltip_button,
                                      'Shared Password: The password that allows for vulnerability detection without revealing them. \n\n'
                                      'Encrypted Code Path: The path to the encrypted code file. \n\n'
                                      'Vulnerability to detect: The type of vulnerability to detect. \n\n'
-                                     'Output Directory: The directory where the encrypted result will be saved.')
+                                     'Result Directory: The directory where the encrypted result will be saved.')
 auditor_side_tooltip_button.place(in_=auditor_side_frame, relx=1.0, rely=0.0, anchor="ne")
 
 auditor_side_umbrela = ttk.Label(auditor_side_frame, text="Detect vulnerabilities without revealing them")
