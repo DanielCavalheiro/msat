@@ -56,6 +56,8 @@ There 2 diferent ways to run the project. Through the graphical interface or usi
 > [!IMPORTANT]
 > In order for any of the following commands to work they must be executed in the root directory of the project and with the Virtual Enviorment activated.
 
+There is a examples directory that holds examples of vulnerable php code that can be used to test the tool with the following commands.
+
 ### GUI
 
 Probably the simpler way to run the project.
