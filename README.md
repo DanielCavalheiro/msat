@@ -88,7 +88,7 @@ python scripts/auditor_side.py <shared_password> <file> <vulnerability_to_detect
 #### Decrypt Result
 
 ```bash
-python scripts/decrypt_result.py <secret_password> <shared_password> <file>"
+python scripts/decrypt_result.py <secret_password> <shared_password> <file>
 ```
   - secrete_password : the password only the client should know
   - shared_password : the password that allowed the tool to find vulnerabilities without revealing them
