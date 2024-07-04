@@ -27,7 +27,7 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
    ```bash
    python -m venv venv
    ```
-5. Activate the Virtual Enviorment
+5. Activate the Virtual Enviorment\
    On macOS and Linux
    ```bash
    source venv/bin/activate
