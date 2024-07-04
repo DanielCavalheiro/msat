@@ -45,7 +45,8 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
 
 There 2 diferent ways to run the project. Through the graphical interface or using the comand line.
 
-> **_NOTE:_**  In order for any of the following commands to work they must be executed in the root directory of the project and with the Virtual Enviorment activated.
+> [!IMPORTANT]
+> In order for any of the following commands to work they must be executed in the root directory of the project and with the Virtual Enviorment activated.
 
 ### GUI
 
@@ -67,7 +68,7 @@ The alternative way to run the project is through the commandline. In the script
 #### Client Side
 
 ```bash
-python scripts/client_side.py <secret_password> <shared_password> <dir> <output_dir>" 
+python scripts/client_side.py <secret_password> <shared_password> <dir> <output_dir> 
 ```
   - secrete_password : the password only the client should know
   - shared_password : the password that allows the tool to find vulnerabilities without revealing them
