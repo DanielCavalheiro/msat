@@ -28,7 +28,7 @@ def show_button(entry: ttk.Entry, button: ttk.Button):
 
 
 root = tkinter.Tk()
-root.title("VSAT")
+root.title("MSAT")
 
 password_show_image = ImageTk.PhotoImage(file="assets/eye_open2.png")
 password_hide_image = ImageTk.PhotoImage(file="assets/eye_closed2.png")
