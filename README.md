@@ -80,7 +80,7 @@ The alternative way to run the project is through the commandline. In the script
 ```bash
 python scripts/client_side.py <secret_password> <shared_password> <dir> <output_dir> 
 ```
-  - secrete_password : the password only the client should know
+  - secret_password : the password only the client should know
   - shared_password : the password that allows the tool to find vulnerabilities without revealing them
   - dir : the directory of the code repo
   - output_dir : the directory where the clien_side_output file will be saved to be later used by the auditor side
@@ -100,7 +100,7 @@ python scripts/auditor_side.py <shared_password> <file> <vulnerability_to_detect
 ```bash
 python scripts/decrypt_result.py <secret_password> <shared_password> <file>
 ```
-  - secrete_password : the password only the client should know
+  - secret_password : the password only the client should know
   - shared_password : the password that allowed the tool to find vulnerabilities without revealing them
   - file : the path to the output file of the auditor side
 
@@ -109,7 +109,7 @@ python scripts/decrypt_result.py <secret_password> <shared_password> <file>
 ```bash
 python scripts/all_in_one.py <secret_password> <shared_password> <dir> <output_dir> <vulnerability_to_detect>
 ```
-  - secrete_password : the password only the client should know
+  - secret_password : the password only the client should know
   - shared_password : the password that allows the tool to find vulnerabilities without revealing them
   - dir : the directory of the code repo
   - output_dir : directory where the clien_side_output file and auditor_side_output file will be saved
