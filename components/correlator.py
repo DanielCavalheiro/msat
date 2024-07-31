@@ -316,6 +316,19 @@ class Correlator:
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
 
+            elif self.current_token.token_type == "CONCAT":
+                # Handle concatenation as if it was a control flow to differentiate it from other paths
+                self.split_counter += 1
+                assignors[-1].split = self.split_counter
+                self.__split_correlate(assignors)
+                break
+
+            elif self.current_token.token_type == "QUOTE":
+                # Handle Encased and whitespace strings as if it was a control flow to differentiate it from other path
+                self.split_counter += 1
+                self.__split_correlate(assignors)
+                break
+
             elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]
                 arguments = self.__handle_func_call()
