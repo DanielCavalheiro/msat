@@ -7,7 +7,7 @@ from utils.token_utils import AbsToken, ScopeChangeToken
 class Correlator:
     """Correlator component class to correlate abstracted tokens."""
 
-    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes):
+    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes, split_counter=0):
         self.abstractor = abstractor  # Abstractor object to get the tokens
         self.data_structure = data_structure  # dictionary where correlations are stored (assignments/function calls)
         self.depth = depth  # depth of the current token (how deep in control flow)
@@ -17,7 +17,7 @@ class Correlator:
         self.current_token = None  # current token being correlated
         self.last_token = None  # last token correlated
         self.next_depth_correlator = None  # the correlator for the next depth (singleton)
-        self.split_counter = 0  # split counter
+        self.split_counter = split_counter  # split counter
 
         self.current_scope = current_scope  # current scope (file/function) being correlated
         if current_scope not in self.data_structure:
@@ -139,7 +139,7 @@ class Correlator:
         """correlate the next depth (control flow) in code """
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes)
+                                                    self.current_scope, self.scopes, self.split_counter)
         self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
 
@@ -156,14 +156,14 @@ class Correlator:
 
             elif self.current_token.token_type == "CONCAT":
                 # Handle concatenation as if it was a control flow to differentiate it from other paths
-                self.split_counter += 1
+                self.split_counter = self.abstractor.lexpos
                 assignors[-1].split = self.split_counter
                 self.__split_correlate(assignors)
                 break
 
             elif self.current_token.token_type == "QUOTE":
                 # Handle Encased and whitespace strings as if it was a control flow to differentiate it from other path
-                self.split_counter += 1
+                self.split_counter = self.abstractor.lexpos
                 self.__split_correlate(assignors)
                 break
 
@@ -318,14 +318,14 @@ class Correlator:
 
             elif self.current_token.token_type == "CONCAT":
                 # Handle concatenation as if it was a control flow to differentiate it from other paths
-                self.split_counter += 1
+                self.split_counter = self.abstractor.lexpos
                 assignors[-1].split = self.split_counter
                 self.__split_correlate(assignors)
                 break
 
             elif self.current_token.token_type == "QUOTE":
                 # Handle Encased and whitespace strings as if it was a control flow to differentiate it from other path
-                self.split_counter += 1
+                self.split_counter = self.abstractor.lexpos
                 self.__split_correlate(assignors)
                 break
 
@@ -360,7 +360,11 @@ class Correlator:
 
         self.current_token = self.__next_token()
         while self.current_token and self.current_token.token_type != "RPAREN":
-            sql_sens.append(self.current_token)
+            if "SQLI_SANF" == self.current_token.token_type:
+                while self.current_token and self.current_token.token_type != "RPAREN":
+                    self.current_token = self.__next_token()
+            else:
+                sql_sens.append(self.current_token)
             self.current_token = self.__next_token()
 
         self.data_structure[self.current_scope]["SQLI_SENS"] = sql_sens
