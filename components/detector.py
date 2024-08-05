@@ -59,6 +59,8 @@ class Detector:
                     )
                     call_args = func_call.arguments
                     for i, func_arg in enumerate(func_scope[args_query]):
+                        if i >= len(call_args):
+                            break  # Skip if there are more arguments in the function than in the call
                         call_arg = call_args[i]
                         if crypto_stuff.hmac_it(call_arg.token_type, self.shared_password) == fun_query:
                             arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,

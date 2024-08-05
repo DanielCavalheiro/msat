@@ -157,8 +157,12 @@ class Correlator:
             elif self.current_token.token_type == "CONCAT":
                 # Handle concatenation as if it was a control flow to differentiate it from other paths
                 self.split_counter = self.abstractor.lexpos
-                assignors[-1].split = self.split_counter
-                self.__split_correlate(assignors)
+                if assignors:
+                    assignors[-1].split = self.split_counter
+                    self.__split_correlate(assignors)
+                else:
+                    while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
+                        self.current_token = self.__next_token()
                 break
 
             elif self.current_token.token_type == "QUOTE":
