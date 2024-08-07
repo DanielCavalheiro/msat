@@ -75,7 +75,7 @@ class Correlator:
                 # Start a new control flow and correlate the next depth
                 self.__correlate_next_depth(self.control_flow_counter, -1)
 
-            elif token_type == "ELSEIF":
+            elif token_type in ("ELSEIF", "CASE"):
                 # Start a new control flow and correlate the next depth
                 elseif_counter += 1
                 self.__correlate_next_depth(self.control_flow_counter, elseif_counter)
@@ -265,7 +265,7 @@ class Correlator:
         while self.current_token and self.current_token.token_type != "END_PARENS":
 
             if "VAR" in self.current_token.token_type or self.current_token.token_type in (
-                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
+                    "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT", "STRING"):
                 arguments.append(self.current_token)
 
             elif "FUNC_CALL" in self.current_token.token_type:
@@ -319,19 +319,6 @@ class Correlator:
             if "VAR" in self.current_token.token_type or self.current_token.token_type in (
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
                 assignors.append(self.current_token)
-
-            elif self.current_token.token_type == "CONCAT":
-                # Handle concatenation as if it was a control flow to differentiate it from other paths
-                self.split_counter = self.abstractor.lexpos
-                assignors[-1].split = self.split_counter
-                self.__split_correlate(assignors)
-                break
-
-            elif self.current_token.token_type == "QUOTE":
-                # Handle Encased and whitespace strings as if it was a control flow to differentiate it from other path
-                self.split_counter = self.abstractor.lexpos
-                self.__split_correlate(assignors)
-                break
 
             elif "FUNC_CALL" in self.current_token.token_type:
                 func_name = self.current_token.token_type.split(":", 1)[1]

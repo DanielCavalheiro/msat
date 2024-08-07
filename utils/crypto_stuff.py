@@ -42,15 +42,16 @@ def decrypt_sse(encrypted_data, password):
 
 def encrypt_ope(data, password):
     """Encrypts data using Order Preserving Encryption."""
-    ope = OPE(password, in_range=ValueRange(-1, 2**15-2),
-              out_range=ValueRange(0, 2**31-1))
+    print(data)
+    ope = OPE(password, in_range=ValueRange(-1, 2**19-2),
+              out_range=ValueRange(0, 2**35-1))
     return ope.encrypt(int(data))
 
 
 def decrypt_ope(encrypted_data, password):
     """Decrypts data using Order Preserving Encryption."""
-    ope = OPE(password, in_range=ValueRange(-1, 2**15-2),
-              out_range=ValueRange(0, 2**31-1))
+    ope = OPE(password, in_range=ValueRange(-1, (2**19)-2),
+              out_range=ValueRange(0, (2**35)-1))
     return ope.decrypt(encrypted_data)
 
 
