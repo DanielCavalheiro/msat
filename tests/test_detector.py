@@ -11,11 +11,11 @@ import base64
 import json
 import os
 
-ENCRYPT_FLAG = True
+ENCRYPT_FLAG = False
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
 DETECTING = "SQLI"
-DIR = "/home/dani/tese/teseProto1/"
+DIR = "/home/dani/Downloads/php-sploits-master/"
 
 
 def decrypt_token(token, secret_password):
@@ -56,12 +56,11 @@ for root, dirs, files in os.walk(DIR):
         if file.endswith('.php'):
             found_php_files = True
             php_file = os.path.join(root, file)
-            with open(php_file, "r", encoding="utf-8") as data:
-                scope = os.path.basename(php_file)
+            with open(php_file, "r", encoding="latin-1") as data:
+                scope = php_file
                 lexer.file_name = scope
                 lexer.input(data.read())
                 lexer.lineno = 1
-
                 correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()
 if not found_php_files:

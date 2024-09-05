@@ -1,4 +1,5 @@
 """Module for the Detector component"""
+from os import remove
 
 import utils.crypto_stuff as crypto_stuff
 from utils.token_utils import AbsToken, ScopeChangeToken

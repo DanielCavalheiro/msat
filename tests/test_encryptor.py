@@ -6,8 +6,8 @@ from components.encryptor import Encryptor
 from components.abstractor import Abstractor
 from components.correlator import Correlator
 
-ENCRYPT_FLAG = True
-DIR = "/home/dani/tese/teseProto1"
+ENCRYPT_FLAG = False
+DIR = "/home/dani/Downloads/php-sploits-master/"
 
 data_structure = {}
 lexer = Abstractor()
@@ -18,12 +18,12 @@ for root, dirs, files in os.walk(DIR):
         if file.endswith('.php'):
             found_php_files = True
             php_file = os.path.join(root, file)
-            data = open(php_file, "r", encoding="utf-8")
+            data = open(php_file, "r", encoding="latin-1")
             with data:
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
                 lexer.input(data.read())
-
+                lexer.lineno = 1
                 correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
                 correlator.correlate()
 if not found_php_files:

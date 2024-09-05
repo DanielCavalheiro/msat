@@ -15,7 +15,7 @@ for root, dirs, files in os.walk(DIR):
         if file.endswith('.php'):
             found_php_files = True
             php_file = os.path.join(root, file)
-            data = open(php_file, "r", encoding="utf-8")
+            data = open(php_file, "r", encoding="latin-1")
             with data:
                 scope = os.path.basename(php_file)
                 lexer.file_name = scope
