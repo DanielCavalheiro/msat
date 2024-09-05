@@ -148,7 +148,7 @@ class Correlator:
         assignee_name = assignee.token_type
         assignors = self.data_structure[self.current_scope].get(assignee_name, [])
 
-        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF", "END_PARENS"):
 
             if "VAR" in self.current_token.token_type or self.current_token.token_type in (
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
@@ -354,8 +354,13 @@ class Correlator:
             if "SQLI_SANF" == self.current_token.token_type:
                 while self.current_token and self.current_token.token_type != "RPAREN":
                     self.current_token = self.__next_token()
+
+            elif "FUNC_CALL" in self.current_token.token_type:
+                while self.current_token and self.current_token.token_type != "END_PARENS":
+                    self.current_token = self.__next_token()
             else:
                 sql_sens.append(self.current_token)
             self.current_token = self.__next_token()
+
 
         self.data_structure[self.current_scope]["SQLI_SENS"] = sql_sens

@@ -31,6 +31,7 @@ class Abstractor:
         self.check_if_oneliner = False  # flag to check if code block has no curly braces (one-liner)
         self.rparen_count = 0  # count of right parenthesis we must see before closing parenthesis
         self.in_func_decl = False  # flag to check if we are in a function declaration
+        self.in_func_call = False  # flag to check if we are in a function call
 
     @property
     def lineno(self):
@@ -179,8 +180,11 @@ class Abstractor:
                         self.in_parens -= 1
                         t.type = "END_PARENS"
                         # If it's not a do-while or function block then next is a condition
-                        if self.code_block and self.code_block[-1][1] not in [0, 3]:
-                            self.check_if_oneliner = True
+                        if not self.in_func_call:
+                            if self.code_block and self.code_block[-1][1] not in [0, 3]:
+                                self.check_if_oneliner = True
+                        else:
+                            self.in_func_call = False
                     else:
                         self.rparen_count -= 1
             case "SEMI":
@@ -229,6 +233,7 @@ class Abstractor:
                         t.type = "FUNC_CALL:" + func_id
                         self.peeked_token = None
                         self.in_parens += 1
+                        self.in_func_call = True
             case "INPUT":
                 # Remove unnecessary tokens afert an input token
                 next_token = self.peek()
