@@ -24,7 +24,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.file_name = scope
                 lexer.input(data.read())
                 lexer.lineno = 1
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, php_file)
                 correlator.correlate()
 if not found_php_files:
     print(f"No PHP files found in {DIR}")

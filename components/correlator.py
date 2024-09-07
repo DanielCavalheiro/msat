@@ -7,7 +7,7 @@ from utils.token_utils import AbsToken, ScopeChangeToken
 class Correlator:
     """Correlator component class to correlate abstracted tokens."""
 
-    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes, split_counter=0):
+    def __init__(self, abstractor: Abstractor, data_structure: dict, depth, flow_type, current_scope, scopes, file_path, split_counter=0):
         self.abstractor = abstractor  # Abstractor object to get the tokens
         self.data_structure = data_structure  # dictionary where correlations are stored (assignments/function calls)
         self.depth = depth  # depth of the current token (how deep in control flow)
@@ -17,6 +17,7 @@ class Correlator:
         self.current_token = None  # current token being correlated
         self.last_token = None  # last token correlated
         self.next_depth_correlator = None  # the correlator for the next depth (singleton)
+        self.file_path = file_path  # file path of the current file being correlated
         self.split_counter = split_counter  # split counter
 
         self.current_scope = current_scope  # current scope (file/function) being correlated
@@ -95,7 +96,7 @@ class Correlator:
                 arguments = self.__handle_func_call()
                 self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(
                     ScopeChangeToken("FUNC_CALL", self.current_token.line_num, self.current_token.token_pos, self.depth,
-                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments))
+                                     self.order, self.flow_type, 0, self.current_scope, func_name, arguments, self.file_path))
 
             elif token_type == "RETURN":
                 # Handle return of a function
@@ -133,13 +134,13 @@ class Correlator:
         t = self.abstractor.token()
         if not t:
             return None
-        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type, 0, self.current_scope)
+        return AbsToken(t.type, t.lineno, t.lexpos, self.depth, self.order, self.flow_type, 0, self.current_scope, self.file_path)
 
     def __correlate_next_depth(self, order: int, flow_type: int):
         """correlate the next depth (control flow) in code """
         if not self.next_depth_correlator:
             self.next_depth_correlator = Correlator(self.abstractor, self.data_structure, self.depth + 1, flow_type,
-                                                    self.current_scope, self.scopes, self.split_counter)
+                                                    self.current_scope, self.scopes, self.file_path, self.split_counter)
         self.next_depth_correlator.update(order, flow_type, self.current_token, self.last_token)
         self.next_depth_correlator.correlate()
 
@@ -148,7 +149,7 @@ class Correlator:
         assignee_name = assignee.token_type
         assignors = self.data_structure[self.current_scope].get(assignee_name, [])
 
-        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF", "END_PARENS"):
+        while self.current_token and self.current_token.token_type not in ("SEMI", "END_CF"):
 
             if "VAR" in self.current_token.token_type or self.current_token.token_type in (
                     "ENCAPSED_AND_WHITESPACE", "CONSTANT_ENCAPSED_STRING", "LNUMBER", "DNUMBER", "INPUT"):
@@ -178,7 +179,7 @@ class Correlator:
                 scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
                                                       self.current_token.token_pos, self.depth,
                                                       self.order, self.flow_type, 0, self.current_scope, func_name,
-                                                      arguments)
+                                                      arguments, self.file_path)
                 assignors.append(scope_change_token)
                 self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
@@ -224,7 +225,7 @@ class Correlator:
                 scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
                                                       self.current_token.token_pos, self.depth,
                                                       self.order, self.flow_type, 0, self.current_scope, func_name,
-                                                      arguments)
+                                                      arguments, self.file_path)
                 assignors.append(scope_change_token)
                 self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
@@ -253,7 +254,7 @@ class Correlator:
             self.current_token = self.__next_token()
 
         # Correlate the entire function scope
-        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes)
+        func_correlator = Correlator(self.abstractor, self.data_structure, self.depth, 0, scope_name, self.scopes, self.file_path)
         func_correlator.correlate()
 
     def __handle_func_call(self):
@@ -274,7 +275,7 @@ class Correlator:
                 scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
                                                       self.current_token.token_pos, self.depth,
                                                       self.order, self.flow_type, 0, self.current_scope, func_name,
-                                                      inner_func_arguments)
+                                                      inner_func_arguments, self.file_path)
                 arguments.append(scope_change_token)
                 self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 
@@ -303,7 +304,7 @@ class Correlator:
         while current_token and current_token.type != "SEMI":
             if current_token.type in ("CONSTANT_ENCAPSED_STRING", "ENCAPSED_AND_WHITESPACE"):
                 token = ScopeChangeToken("IMPORT", current_token.lineno, current_token.lexpos, self.depth, self.order,
-                                         self.flow_type, 0, self.current_scope, current_token.value, [])
+                                         self.flow_type, 0, self.current_scope, current_token.value, [], self.file_path)
                 self.data_structure[self.current_scope].setdefault("IMPORTS", []).append(token)
             current_token = self.abstractor.token()
 
@@ -326,7 +327,7 @@ class Correlator:
                 scope_change_token = ScopeChangeToken("FUNC_CALL", self.current_token.line_num,
                                                       self.current_token.token_pos, self.depth,
                                                       self.order, self.flow_type, 0, self.current_scope, func_name,
-                                                      arguments)
+                                                      arguments, self.file_path)
                 assignors.append(scope_change_token)
                 self.data_structure[self.current_scope].setdefault("FUNC_CALL", []).append(scope_change_token)
 

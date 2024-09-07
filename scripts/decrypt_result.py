@@ -24,21 +24,21 @@ def decrypt_token(token, secret_password, special_tokens):
     line_num = crypto_stuff.decrypt_sse(
         base64.b64decode(token.line_num), secret_password)
     position = crypto_stuff.decrypt_ope(token.token_pos, secret_password)
-    scope = crypto_stuff.decrypt_sse(
-        base64.b64decode(token.scope), secret_password)
+    file_path = crypto_stuff.decrypt_gcm(
+        token.file_path, secret_password)
     if token.arguments is not None:
         scope_name = crypto_stuff.decrypt_sse(
             base64.b64decode(token.scope_name), secret_password)
         arguments = []
         for arg in token.arguments:
             arguments.append(decrypt_token(arg, secret_password, special_tokens))
-        return ResultToken(token_type, line_num, position, scope, scope_name, arguments)
+        return ResultToken(token_type, line_num, position, file_path, scope_name, arguments)
     elif token.scope_name is not None:
         scope_name = crypto_stuff.decrypt_sse(
             base64.b64decode(token.scope_name), secret_password)
-        return ResultToken(token_type, line_num, position, scope, scope_name)
+        return ResultToken(token_type, line_num, position, file_path, scope_name)
 
-    return ResultToken(token_type, line_num, position, scope)
+    return ResultToken(token_type, line_num, position, file_path)
 
 
 def main(secret_password, shared_password, file):

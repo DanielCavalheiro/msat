@@ -220,7 +220,8 @@ class Abstractor:
 
             case "STRING":
                 # Abstract function names (e.g. "foo" -> FUNC1)
-                func_id = self.file_name + "/" + self.__get_func_id(t.value)
+                # func_id = self.file_name + "/" + self.__get_func_id(t.value)
+                func_id = self.__get_func_id(t.value)
                 if self.in_func_decl:
                     self.code_block[-1][2] = func_id
                     t.type = func_id

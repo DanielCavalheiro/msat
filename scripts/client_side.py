@@ -42,7 +42,7 @@ def main(secret_password, shared_password, repo_dir, output_dir):
                         lexer.input(data.read())
                         lexer.lineno = 1
 
-                        correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
+                        correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, php_file)
                         correlator.correlate()
 
         if not found_php_files:

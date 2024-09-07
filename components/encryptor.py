@@ -92,6 +92,7 @@ class Encryptor:
             str(token.split), secret_password)
         scope = crypto_stuff.encrypt_sse(
             token.scope, secret_password)
+        file_path = crypto_stuff.encrypt_gcm(token.file_path, secret_password)
 
         if isinstance(token, ScopeChangeToken):
             token_type = crypto_stuff.hmac_it(
@@ -106,7 +107,7 @@ class Encryptor:
                     arg, secret_password, shared_password))
 
             return ScopeChangeToken(token_type, line_num, position, depth, order, flow_type, split, scope, func_name,
-                                    enc_args)
+                                    enc_args, file_path)
 
         else:  # isinstance(token, AbsToken)
             if token.token_type in SPECIAL_TOKENS:
@@ -116,7 +117,7 @@ class Encryptor:
                 token_type = crypto_stuff.encrypt_sse(
                     token.token_type, secret_password)
 
-            return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope)
+            return AbsToken(token_type, line_num, position, depth, order, flow_type, split, scope, file_path)
 
     def __convert_to_result(self, token):
         if isinstance(token, ScopeChangeToken):
@@ -124,9 +125,9 @@ class Encryptor:
                 arguments = []
                 for arg in token.arguments:
                     arguments.append(self.__convert_to_result(arg))
-                return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope,
+                return ResultToken(token.token_type, token.line_num, token.token_pos, token.file_path,
                                    token.scope_name, arguments)
-            return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope,
+            return ResultToken(token.token_type, token.line_num, token.token_pos, token.file_path,
                                token.scope_name)
         else:  # isinstance(token, AbsToken)
-            return ResultToken(token.token_type, token.line_num, token.token_pos, token.scope)
+            return ResultToken(token.token_type, token.line_num, token.token_pos, token.file_path)

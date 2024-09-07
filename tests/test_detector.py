@@ -11,11 +11,11 @@ import base64
 import json
 import os
 
-ENCRYPT_FLAG = False
+ENCRYPT_FLAG = True
 SECRET_PASSWORD = crypto_stuff.generate_key("secret_password")
 SHARED_PASSWORD = crypto_stuff.generate_key("shared_password")
-DETECTING = "SQLI"
-DIR = "/home/dani/Downloads/php-sploits-master/"
+DETECTING = "XSS"
+DIR = "/home/dani/Downloads/WackoPicko-master/"
 
 
 def decrypt_token(token, secret_password):
@@ -30,21 +30,21 @@ def decrypt_token(token, secret_password):
     line_num = crypto_stuff.decrypt_sse(
         base64.b64decode(token.line_num), secret_password)
     position = crypto_stuff.decrypt_ope(token.token_pos, secret_password)
-    scope = crypto_stuff.decrypt_sse(
-        base64.b64decode(token.scope), secret_password)
+    file_path = crypto_stuff.decrypt_gcm(
+        token.file_path, secret_password)
     if token.arguments is not None:
         scope_name = crypto_stuff.decrypt_sse(
             base64.b64decode(token.scope_name), secret_password)
         arguments = []
         for arg in token.arguments:
             arguments.append(decrypt_token(arg, secret_password))
-        return ResultToken(token_type, line_num, position, scope, scope_name, arguments)
+        return ResultToken(token_type, line_num, position, file_path, scope_name, arguments)
     elif token.scope_name is not None:
         scope_name = crypto_stuff.decrypt_sse(
             base64.b64decode(token.scope_name), secret_password)
-        return ResultToken(token_type, line_num, position, scope, scope_name)
+        return ResultToken(token_type, line_num, position, file_path, scope_name)
 
-    return ResultToken(token_type, line_num, position, scope)
+    return ResultToken(token_type, line_num, position, file_path)
 
 
 data_structure = {}
@@ -61,7 +61,7 @@ for root, dirs, files in os.walk(DIR):
                 lexer.file_name = scope
                 lexer.input(data.read())
                 lexer.lineno = 1
-                correlator = Correlator(lexer, data_structure, 0, 0, scope, {})
+                correlator = Correlator(lexer, data_structure, 0, 0, scope, {}, php_file)
                 correlator.correlate()
 if not found_php_files:
     print(f"No PHP files found in {DIR}")

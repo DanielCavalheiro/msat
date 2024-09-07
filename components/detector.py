@@ -67,11 +67,11 @@ class Detector:
                             arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
                                                    func_arg.depth,
                                                    func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
-                                                   call_arg.scope_name, call_arg.arguments)
+                                                   call_arg.scope_name, call_arg.arguments, call_arg.file_path)
                         else:
                             arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
                                            func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split,
-                                           call_arg.scope)
+                                           call_arg.scope, call_arg.file_path)
                         func_arg_key = crypto_stuff.hmac_it(
                             func_arg.token_type, self.shared_password)
                         func_arg_correlations = func_scope.get(
@@ -151,20 +151,21 @@ class Detector:
             query = self.special_tokens["ARGS"]
             query = crypto_stuff.hmac_it(query, self.shared_password)
             for i, func_arg in enumerate(func_scope[query]):
-                call_arg = call_args[i]
-                if call_arg.token_type == func_call:
-                    arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos, func_arg.depth,
-                                           func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
-                                           call_arg.scope_name, call_arg.arguments)
-                else:
-                    arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
-                                   func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope)
-                func_arg_key = crypto_stuff.hmac_it(
-                    func_arg.token_type, self.shared_password)
-                func_arg_correlations = func_scope.get(
-                    func_arg_key, [])
-                func_arg_correlations.append(arg)
-                func_scope[func_arg_key] = func_arg_correlations
+                if i < len(call_args):
+                    call_arg = call_args[i]
+                    if call_arg.token_type == func_call:
+                        arg = ScopeChangeToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos, func_arg.depth,
+                                               func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope,
+                                               call_arg.scope_name, call_arg.arguments, call_arg.file_path)
+                    else:
+                        arg = AbsToken(call_arg.token_type, call_arg.line_num, call_arg.token_pos,
+                                       func_arg.depth, func_arg.order, func_arg.flow_type, func_arg.split, call_arg.scope, call_arg.file_path)
+                    func_arg_key = crypto_stuff.hmac_it(
+                        func_arg.token_type, self.shared_password)
+                    func_arg_correlations = func_scope.get(
+                        func_arg_key, [])
+                    func_arg_correlations.append(arg)
+                    func_scope[func_arg_key] = func_arg_correlations
 
             # Recursively find flows in the function scope
             query = self.special_tokens["RETURN"]
