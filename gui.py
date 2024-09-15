@@ -5,7 +5,9 @@ from utils.tkinter_tooltip import CreateToolTip
 from PIL import ImageTk
 import sv_ttk
 import tkinter.messagebox
-from scripts import client_side, auditor_side, decrypt_result
+import decrypt_result
+import client_side
+import auditor_side
 
 
 def browse_button(folder_path):

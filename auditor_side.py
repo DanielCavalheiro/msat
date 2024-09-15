@@ -1,5 +1,5 @@
 """Script that uses the output of the clint side to detect vulnerabilities without revealing them"""
-
+import argparse
 import json
 import sys
 import os
@@ -52,10 +52,16 @@ def main(shared_password, file, vulnerability_to_detect, output_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print(f"Error: Incorrect number of arguments. Expected {4}, got {len(sys.argv) - 1}.")
-        print("Usage: python3 auditor_side.py <shared_password> <file> <vulnerability_to_detect> <output_dir>")
-        sys.exit(1)
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    parser = argparse.ArgumentParser(description="Run the auditor side of the tool. Requires a file outputted by the client side. This script will detect vulnerabilities without revealing them.")
+    parser.add_argument("--shared_password", "-shp", help="The shared password used in detection.",
+                        required=True)
+    parser.add_argument("--file_path", "-f", help="The path to the client side output. If not passed the current directory is scanned for a file called 'client_side_output'", required=False, default="client_side_output")
+    parser.add_argument("--vuln_type", "-v", help="The type of vulnerability to detect, either XSS or SQLI.",
+                        required=True, choices=["xss", "sqli"])
+    parser.add_argument("--output_dir", "-o", help="Optional directory to save the output file. The default is the current directory.",
+                        required=False, default=".")
+    args = parser.parse_args()
+
+    main(args.shared_password, args.file_path, args.vuln_type.upper(), args.output_dir)
 
 

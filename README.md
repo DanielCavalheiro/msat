@@ -1,6 +1,6 @@
 # MSAT (Masked Static Analysis Tool)
 
-MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designed for PHP codebases that prioritizes code confidentiality. Unlike traditional static analysis tools, MSAT first encrypts your codebase and then performs vulnerability detection on the encrypted code. The results are also encrypted, ensuring that only the person who initiated the encryption can decrypt and view the findings.
+MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designed for PHP codebases that prioritizes code confidentiality. Unlike traditional static analysis tools, MSAT first encrypts your codebase and then performs vulnerability detection on the encrypted code. The results are also encrypted, ensuring that only the person who initiated the encryption can decrypt and view the findings. It can also be run without encryption.
 
 ## Table of Contents
 
@@ -21,18 +21,18 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
     git clone https://github.com/DanielCavalheiro/msat.git
     ```
 
-3. Navigate into the project directory
+2. Navigate into the project directory
     ```bash
     cd msat
     ```
 
-4. Create a Virtual Enviorment
+3. Create a Virtual Environment
 
     ```bash
    python -m venv venv
    ```
 
-6. Activate the Virtual Enviorment
+4. Activate the Virtual Environment
 
     On macOS and Linux
    ```bash
@@ -43,7 +43,7 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
    venv\Scripts\activate
    ```
 
-8. Install dependencies
+5. Install dependencies
 
     ```bash
     pip install -r requirements.txt
@@ -51,68 +51,74 @@ MSAT (Masked Static Analysis Tool) is an innovative static analysis tool designe
 
 ## Usage
 
-There 2 diferent ways to run the project. Through the graphical interface or using the comand line.
+There 2 different ways to run the project. Through the graphical interface or using the command line.
 
 > [!IMPORTANT]
-> In order for any of the following commands to work they must be executed in the root directory of the project and with the Virtual Enviorment activated.
+> In order for any of the following commands to work they must be executed in the root directory of the project and with the Virtual Environment activated.
 
-There is a examples directory that holds examples of vulnerable php code that can be used to test the tool with the following commands.
+There is an examples directory that holds examples of vulnerable php code that can be used to test the tool with the following commands.
 
 ### GUI
 
 Probably the simpler way to run the project.
 
 ```bash
-python main.py
+python gui.py
 ```
-If done correctly a interface will appear. There are 3 different tabs in the interface: client side, auditor side, decrypt retsult. Each should be executed in sequence to get a result.
+If done correctly an interface will appear. There are 3 different tabs in the interface: client side, auditor side, decrypt result. Each should be executed in sequence to get a result.
 
 ### Command Line
 
 The alternative way to run the project is through the commandline. In the scripts directory there can be found:
   - client_side.py : the script to run the client side;
-  - auditor_side.py : the scrip to run the auditor side;
+  - auditor_side.py : the script to run the auditor side;
   - decrypt_result : the script to decrypt the auditor side output;
-  - all_in_one.py : the script that runs the whole tool in one go.
+  - run_all.py : the script that runs the whole tool in one go.
 
 #### Client Side
 
 ```bash
-python scripts/client_side.py <secret_password> <shared_password> <dir> <output_dir> 
+python client_side.py [-h] --secret_password SECRET_PASSWORD --shared_password SHARED_PASSWORD --project_dir PROJECT_DIR [--output_dir OUTPUT_DIR]
 ```
-  - secret_password : the password only the client should know
-  - shared_password : the password that allows the tool to find vulnerabilities without revealing them
-  - dir : the directory of the code repo
-  - output_dir : the directory where the clien_side_output file will be saved to be later used by the auditor side
+  - -h, --help: help message and exit
+  - --secret_password SECRET_PASSWORD, -sep SECRET_PASSWORD : the password only the client should know used to encrypt critical data
+  - --shared_password SHARED_PASSWORD, -shp SHARED_PASSWORD : the password that allows the tool to find vulnerabilities without revealing them
+  - --project_dir PROJECT_DIR, -p PROJECT_DIR : the directory of the project to be analyzed
+  - --output_dir OUTPUT_DIR, -o OUTPUT_DIR : the directory where the client_side_output file will be saved to be later used by the auditor side. If not provided the output will be saved in the current directory.
 
 #### Auditor Side
 
 ```bash
-python scripts/auditor_side.py <shared_password> <file> <vulnerability_to_detect> <output_dir>
+python auditor_side.py [-h] --shared_password SHARED_PASSWORD [--file_path FILE_PATH] --vuln_type {xss,sqli} [--output_dir OUTPUT_DIR]
 ```
- - shared_password : the password that allows the tool to find vulnerabilities without revealing them
- - file : path to the output file of the client side
- - vulnerability_to_detect : type of vulnerability to detect (either XSS or SQLI)
- - output_dir : the directory where the auditor_side_output file will be saved to be later decrypted by the client
+ - -h, --help: help message and exit
+ - --shared_password SHARED_PASSWORD, -shp SHARED_PASSWORD : the password that allows the tool to find vulnerabilities without revealing them
+ - --file_path FILE_PATH, -f FILE_PATH : path to the output file of the client side. If not provided the tool will look for the file in the current directory
+ - --vuln_type {xss,sqli}, -v {xss,sqli} : type of vulnerability to detect (either xss or sqli)
+ - --output_dir OUTPUT_DIR, -o OUTPUT_DIR : the directory where the auditor_side_output file will be saved to be later decrypted by the client. If not provided the output will be saved in the current directory.
 
 #### Decrypt Result
 
 ```bash
-python scripts/decrypt_result.py <secret_password> <shared_password> <file>
+python decrypt_result.py [-h] --secret_password SECRET_PASSWORD --shared_password SHARED_PASSWORD [--file_path FILE_PATH]
 ```
-  - secret_password : the password only the client should know
-  - shared_password : the password that allowed the tool to find vulnerabilities without revealing them
-  - file : the path to the output file of the auditor side
+  - -h, --help: help message and exit
+  - --secret_password SECRET_PASSWORD, -sep SECRET_PASSWORD : the password only the client should know
+  - --shared_password SHARED_PASSWORD, -shp SHARED_PASSWORD : the password that allowed the tool to find vulnerabilities without revealing them
+  - --file_path FILE_PATH, -f FILE_PATH : the path to the output file of the auditor side. If not provided the tool will look for the file in the current directory.
 
-#### All In One
+#### Run All
 
 ```bash
-python scripts/all_in_one.py <secret_password> <shared_password> <dir> <output_dir> <vulnerability_to_detect>
+python run_all.py [-h] --project_dir PROJECT_DIR [--no-encryption] --vuln_type {xss,sqli} [--secret_password SECRET_PASSWORD] [--shared_password SHARED_PASSWORD]
+
 ```
-  - secret_password : the password only the client should know
-  - shared_password : the password that allows the tool to find vulnerabilities without revealing them
-  - dir : the directory of the code repo
-  - output_dir : directory where the clien_side_output file and auditor_side_output file will be saved
-  - vulnerability_to_detect : type of vulnerability to detect (either XSS or SQLI)
+  - -h, --help: help message and exit
+  - --project_dir PROJECT_DIR, -p PROJECT_DIR : the directory of the project to be analyzed.
+  - --no-encryption, -ne : flag to run the tool without encryption. If not provided then encryption will be used.
+  - --vuln_type {xss,sqli}, -v {xss,sqli} : type of vulnerability to detect (either xss or sqli).
+  - --secret_password SECRET_PASSWORD, -sep SECRET_PASSWORD : The secret password to encrypt critical data. Can be omitted if no-encryption flag is provided.
+  - --shared_password SHARED_PASSWORD, -shp SHARED_PASSWORD : The shared password to encrypt data used in detection. Can be omitted if no-encryption flag is provided.
+
 
 

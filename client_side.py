@@ -1,5 +1,5 @@
 """Script that converts a directory with php code in to an encrypt version of it to be used by the auditor side."""
-
+import argparse
 import os
 import sys
 
@@ -62,9 +62,17 @@ def main(secret_password, shared_password, repo_dir, output_dir):
     return 1, success
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print(f"Error: Incorrect number of arguments. Expected {4}, got {len(sys.argv) - 1}.")
-        print("Usage: python3 client_side.py <secret_password> <shared_password> <dir> <output_dir>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Run the client side of the tool. This scrip will transform php project in to a transformed encrypted version of it.")
+    parser.add_argument("--secret_password", "-sep", help="The secret password to encrypt critical data.",
+                        required=True)
+    parser.add_argument("--shared_password", "-shp", help="The shared password to encrypt data used in detection.",
+                        required=True)
+    parser.add_argument("--project_dir", "-p", help="The directory of the project to be analyzed.", required=True)
 
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    parser.add_argument("--output_dir", "-o",
+                        help="Optional directory to save the output file. The default is the current directory.",
+                        required=False, default=".")
+    args = parser.parse_args()
+
+    main(args.secret_password, args.shared_password, args.project_dir, args.output_dir)
