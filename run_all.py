@@ -73,7 +73,7 @@ try:
             if file.endswith('.php'):
                 php_file = os.path.join(root, file)
                 with open(php_file, "r", encoding="latin-1") as data:
-                    scope = os.path.basename(php_file)
+                    scope = php_file
                     lexer.file_name = scope
                     lexer.input(data.read())
                     lexer.lineno = 1
